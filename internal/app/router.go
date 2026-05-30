@@ -19,6 +19,8 @@ func (a *App) SetupRouter() *gin.Engine {
 
 	r := gin.New()
 
+	r.SetTrustedProxies(nil)
+
 	r.Use(
 		rt.RateLimiterMiddleware(50, 100),
 		GinSlogLogger(),
@@ -78,7 +80,6 @@ func GinSlogLogger() gin.HandlerFunc {
 			slog.String("path", path),
 			slog.String("query", rawQuery),
 			slog.String("ip", c.ClientIP()),
-			slog.String("forwarded_for", c.Request.Header.Get("X-Forwarded-For")),
 			slog.Duration("latency", time.Since(start)),
 		)
 	}
