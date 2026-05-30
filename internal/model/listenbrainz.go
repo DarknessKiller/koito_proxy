@@ -22,18 +22,18 @@ type ListenBrainzTrackMetaData struct {
 	ArtistName     string                     `json:"artist_name"` // required
 	TrackName      string                     `json:"track_name"`  // required
 	ReleaseName    string                     `json:"release_name,omitempty"`
-	MBIDMapping    ListenBrainzMBIDMapping    `json:"mbid_mapping"`
+	MBIDMapping    ListenBrainzMBIDMapping    `json:"mbid_mapping,omitempty"`
 	AdditionalInfo ListenBrainzAdditionalInfo `json:"additional_info,omitempty"`
 }
 type ListenBrainzArtist struct {
-	ArtistMBID string `json:"artist_mbid"`
-	ArtistName string `json:"artist_credit_name"`
+	ArtistMBID string `json:"artist_mbid,omitempty"`
+	ArtistName string `json:"artist_credit_name,omitempty"`
 }
 type ListenBrainzMBIDMapping struct {
-	ReleaseMBID   string               `json:"release_mbid"`
-	RecordingMBID string               `json:"recording_mbid"`
-	ArtistMBIDs   []string             `json:"artist_mbids"`
-	Artists       []ListenBrainzArtist `json:"artists"`
+	ReleaseMBID   string               `json:"release_mbid,omitempty"`
+	RecordingMBID string               `json:"recording_mbid,omitempty"`
+	ArtistMBIDs   []string             `json:"artist_mbids,omitempty"`
+	Artists       []ListenBrainzArtist `json:"artists,omitempty"`
 }
 
 type ListenBrainzAdditionalInfo struct {
