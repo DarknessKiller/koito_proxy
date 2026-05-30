@@ -78,6 +78,7 @@ func GinSlogLogger() gin.HandlerFunc {
 			slog.String("path", path),
 			slog.String("query", rawQuery),
 			slog.String("ip", c.ClientIP()),
+			slog.String("forwarded_for", c.Request.Header.Get("X-Forwarded-For")),
 			slog.Duration("latency", time.Since(start)),
 		)
 	}
