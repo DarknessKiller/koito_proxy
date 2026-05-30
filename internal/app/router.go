@@ -27,6 +27,7 @@ func (a *App) SetupRouter() *gin.Engine {
 
 	cache := auth.NewCache()
 	lbAuth := auth.NewListenBrainzAuth(a.bs.Config, cache)
+	koitoAuth := auth.NewKoitoAuth(a.bs.Config, cache)
 
 	lbHandler := listenbrainz.NewHandler(a.bs.Engine, a.bs.Config)
 	koitoHandler := koito.NewHandler(a.bs.Engine, a.bs.Store, a.bs.Config)
@@ -45,6 +46,7 @@ func (a *App) SetupRouter() *gin.Engine {
 
 	r.POST(
 		"/apis/web/v1/:entity/:id/merge",
+		koitoAuth.Middleware(),
 		koitoHandler.InterceptMerge,
 	)
 
