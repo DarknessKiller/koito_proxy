@@ -1,39 +1,52 @@
 package model
 
-type ListenBrainzTrackMetaData struct {
-	TrackName      string                     `json:"track_name"`
-	ArtistName     string                     `json:"artist_name"`
-	ReleaseName    string                     `json:"release_name,omitempty"`
-	AdditionalInfo ListenBrainzAdditionalInfo `json:"additional_info"`
+type LbzListenType string
+
+const (
+	ListenTypeSingle     LbzListenType = "single"
+	ListenTypePlayingNow LbzListenType = "playing_now"
+	ListenTypeImport     LbzListenType = "import"
+)
+
+type ListenBrainzSubmitRequest struct {
+	ListenType LbzListenType               `json:"listen_type,omitempty"`
+	Payload    []ListenBrainzSubmitPayload `json:"payload,omitempty"`
 }
 
-type ListenBrainzAdditionalInfo struct {
-	CustomTrackID int64             `json:"custom_track_id"`
-	ArtistIds     []int64           `json:"artist_ids"`
-	ArtistNames   []string          `json:"artist_names"`
-	MusicbrainzID int64             `json:"musicbrainz_id"`
-	ListenCount   int64             `json:"listen_count"`
-	Duration      int64             `json:"duration"`
-	AlbumID       int64             `json:"album_id"`
-	FirstListen   int64             `json:"first_listen"`
-	AllTimeRank   int64             `json:"all_time_rank"`
-	Image         ListenBrainzImage `json:"image"`
-}
-
-type ListenBrainzImage struct {
-	XS     string `json:"xs"`
-	Small  string `json:"small"`
-	Medium string `json:"medium"`
-	Large  string `json:"large"`
-	XL     string `json:"xl"`
-}
-
-type ListenBrainzPayload struct {
-	ListenedAt    int64                     `json:"listened_at"`
+type ListenBrainzSubmitPayload struct {
+	ListenedAt    int64                     `json:"listened_at,omitempty"`
 	TrackMetaData ListenBrainzTrackMetaData `json:"track_metadata"`
 }
 
-type ListenBrainzSubmitRequest struct {
-	ListenType string                `json:"listen_type"`
-	Payload    []ListenBrainzPayload `json:"payload"`
+type ListenBrainzTrackMetaData struct {
+	ArtistName     string                     `json:"artist_name"` // required
+	TrackName      string                     `json:"track_name"`  // required
+	ReleaseName    string                     `json:"release_name,omitempty"`
+	MBIDMapping    ListenBrainzMBIDMapping    `json:"mbid_mapping"`
+	AdditionalInfo ListenBrainzAdditionalInfo `json:"additional_info,omitempty"`
+}
+type ListenBrainzArtist struct {
+	ArtistMBID string `json:"artist_mbid"`
+	ArtistName string `json:"artist_credit_name"`
+}
+type ListenBrainzMBIDMapping struct {
+	ReleaseMBID   string               `json:"release_mbid"`
+	RecordingMBID string               `json:"recording_mbid"`
+	ArtistMBIDs   []string             `json:"artist_mbids"`
+	Artists       []ListenBrainzArtist `json:"artists"`
+}
+
+type ListenBrainzAdditionalInfo struct {
+	MediaPlayer             string   `json:"media_player,omitempty"`
+	SubmissionClient        string   `json:"submission_client,omitempty"`
+	SubmissionClientVersion string   `json:"submission_client_version,omitempty"`
+	ReleaseMBID             string   `json:"release_mbid,omitempty"`
+	ReleaseGroupMBID        string   `json:"release_group_mbid,omitempty"`
+	ArtistMBIDs             []string `json:"artist_mbids,omitempty"`
+	ArtistNames             []string `json:"artist_names,omitempty"`
+	RecordingMBID           string   `json:"recording_mbid,omitempty"`
+	DurationMs              int32    `json:"duration_ms,omitempty"`
+	Duration                int32    `json:"duration,omitempty"`
+	Tags                    []string `json:"tags,omitempty"`
+	AlbumArtist             string   `json:"albumartist,omitempty"`
 }

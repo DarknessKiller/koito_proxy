@@ -59,7 +59,7 @@ var _ = Describe("InterceptSubmitListen", func() {
 
 		reqBody, err := json.Marshal(model.ListenBrainzSubmitRequest{
 			ListenType: "single",
-			Payload: []model.ListenBrainzPayload{{
+			Payload: []model.ListenBrainzSubmitPayload{{
 				ListenedAt: 1234567890,
 				TrackMetaData: model.ListenBrainzTrackMetaData{
 					TrackName:  "Old Track",
