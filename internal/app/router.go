@@ -19,8 +19,6 @@ func (a *App) SetupRouter() *gin.Engine {
 
 	r := gin.New()
 
-	r.SetTrustedProxies(nil)
-
 	r.Use(
 		rt.RateLimiterMiddleware(50, 100),
 		GinSlogLogger(),
