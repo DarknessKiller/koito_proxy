@@ -35,6 +35,9 @@ RUN mkdir -p /app/data
 # Volume for database persistence
 VOLUME ["/app/data"]
 
+# Expose Port 4112
+EXPOSE 4112
+
 # Copy entrypoint and make executable
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
