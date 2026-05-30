@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log/slog"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -8,9 +9,8 @@ import (
 
 type Config struct {
 	Port        string
-	Env         string
-	UpstreamURL string
 	DBPath      string
+	UpstreamURL string
 }
 
 func Load() (*Config, error) {
@@ -18,17 +18,17 @@ func Load() (*Config, error) {
 	_ = godotenv.Load()
 
 	return &Config{
-		Env:         checkEnv("ENV"),
-		Port:        checkEnv("PROXY_PORT"),
-		DBPath:      checkEnv("PROXY_DB"),
-		UpstreamURL: checkEnv("KOITO_URL"),
+		Port:        checkEnv("PROXY_PORT", "4112"),
+		DBPath:      checkEnv("PROXY_DB", "/app/data/koito.db"),
+		UpstreamURL: checkEnv("KOITO_URL", "http://localhost:4110"),
 	}, nil
 }
 
-func checkEnv(key string) string {
+func checkEnv(key string, defaultValue string) string {
 	val := os.Getenv(key)
 	if val == "" {
-		panic("enviroment variable '" + key + "' is not set")
+		slog.Warn("enviroment variable '" + key + "' is not set, using default value")
+		return defaultValue
 	}
 	return val
 }
