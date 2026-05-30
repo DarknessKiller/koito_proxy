@@ -1,9 +1,14 @@
 package rules
 
 import (
+	"errors"
 	"koito_proxy/internal/model"
 	"sync"
 	"sync/atomic"
+)
+
+var (
+	ErrArtistReplacementRequiresTrackMatch = errors.New("artist replacement requires track match")
 )
 
 type engineState struct {
@@ -28,6 +33,10 @@ func NewEngine(rules []Rule) *Engine {
 	}
 
 	for _, r := range rules {
+		if err := ValidateRule(r); err != nil {
+			continue
+		}
+
 		addToState(s, r)
 	}
 
@@ -78,7 +87,11 @@ func (e *Engine) Apply(metadata *model.ListenBrainzTrackMetaData) {
 	}
 }
 
-func (e *Engine) Add(r Rule) {
+func (e *Engine) Add(r Rule) error {
+	if err := ValidateRule(r); err != nil {
+		return err
+	}
+
 	e.writeMu.Lock()
 	defer e.writeMu.Unlock()
 
@@ -89,6 +102,7 @@ func (e *Engine) Add(r Rule) {
 	addToState(next, r)
 
 	e.state.Store(next)
+	return nil
 }
 
 func (e *Engine) Delete(id int64) {
@@ -207,4 +221,14 @@ func match(r Rule, m *model.ListenBrainzTrackMetaData) bool {
 		return false
 	}
 	return r.MatchArtistName.Valid || r.MatchTrackName.Valid || r.MatchReleaseName.Valid
+}
+
+func ValidateRule(r Rule) error {
+	if r.ReplaceArtistName.Valid {
+		if !r.MatchTrackName.Valid {
+			return ErrArtistReplacementRequiresTrackMatch
+		}
+	}
+
+	return nil
 }
