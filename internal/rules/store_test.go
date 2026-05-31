@@ -18,7 +18,7 @@ func TestRules(t *testing.T) {
 	RunSpecs(t, "Rules Suite")
 }
 
-var _ = Describe("Store and RuleEngine", func() {
+var _ = Describe("Store and Engine", func() {
 	var db *sql.DB
 	var store *rules.Store
 
@@ -62,7 +62,7 @@ var _ = Describe("Store and RuleEngine", func() {
 		})
 
 		It("adds new overwrite rules", func() {
-			rule := rules.Rule{
+			rule := model.Rule{
 				MatchTrackName:   sql.NullString{String: "Old Track", Valid: true},
 				ReplaceTrackName: sql.NullString{String: "New Track", Valid: true},
 			}
@@ -76,7 +76,7 @@ var _ = Describe("Store and RuleEngine", func() {
 		})
 
 		It("silently ignores duplicate rules on add", func() {
-			rule := rules.Rule{
+			rule := model.Rule{
 				MatchArtistName:   sql.NullString{String: "Artist X", Valid: true},
 				ReplaceArtistName: sql.NullString{String: "Artist Y", Valid: true},
 			}
@@ -91,16 +91,16 @@ var _ = Describe("Store and RuleEngine", func() {
 		})
 	})
 
-	Describe("RuleEngine", func() {
+	Describe("Engine", func() {
 		It("applies matching overwrite rules to track metadata", func() {
-			rule := rules.Rule{
+			rule := model.Rule{
 				MatchTrackName:    sql.NullString{String: "Old Track", Valid: true},
 				MatchArtistName:   sql.NullString{String: "Old Artist", Valid: true},
 				ReplaceTrackName:  sql.NullString{String: "New Track", Valid: true},
 				ReplaceArtistName: sql.NullString{String: "New Artist", Valid: true},
 			}
 
-			engine := rules.NewRuleEngine([]rules.Rule{rule})
+			engine := rules.NewRuleEngine([]model.Rule{rule})
 			metadata := &model.ListenBrainzTrackMetaData{
 				TrackName:  "Old Track",
 				ArtistName: "Old Artist",
@@ -113,12 +113,12 @@ var _ = Describe("Store and RuleEngine", func() {
 		})
 
 		It("applies artist-only overwrite rules", func() {
-			rule := rules.Rule{
+			rule := model.Rule{
 				MatchArtistName:   sql.NullString{String: "Solo Artist", Valid: true},
 				ReplaceArtistName: sql.NullString{String: "Renamed Artist", Valid: true},
 			}
 
-			engine := rules.NewRuleEngine([]rules.Rule{rule})
+			engine := rules.NewRuleEngine([]model.Rule{rule})
 			metadata := &model.ListenBrainzTrackMetaData{
 				TrackName:  "Some Track",
 				ArtistName: "Solo Artist",
@@ -130,12 +130,12 @@ var _ = Describe("Store and RuleEngine", func() {
 		})
 
 		It("applies release-only overwrite rules", func() {
-			rule := rules.Rule{
+			rule := model.Rule{
 				MatchReleaseName:   sql.NullString{String: "Old Album", Valid: true},
 				ReplaceReleaseName: sql.NullString{String: "New Album", Valid: true},
 			}
 
-			engine := rules.NewRuleEngine([]rules.Rule{rule})
+			engine := rules.NewRuleEngine([]model.Rule{rule})
 			metadata := &model.ListenBrainzTrackMetaData{
 				TrackName:   "Some Track",
 				ArtistName:  "Some Artist",

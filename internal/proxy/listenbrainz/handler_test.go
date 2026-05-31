@@ -48,13 +48,13 @@ var _ = Describe("InterceptSubmitListen", func() {
 
 		cfg := &config.Config{UpstreamURL: upstream.URL}
 
-		rule := rules.Rule{
+		rule := model.Rule{
 			MatchTrackName:    sql.NullString{String: "Old Track", Valid: true},
 			MatchArtistName:   sql.NullString{String: "Old Artist", Valid: true},
 			ReplaceTrackName:  sql.NullString{String: "New Track", Valid: true},
 			ReplaceArtistName: sql.NullString{String: "New Artist", Valid: true},
 		}
-		engine := rules.NewRuleEngine([]rules.Rule{rule})
+		engine := rules.NewRuleEngine([]model.Rule{rule})
 		h := listenbrainz.NewHandler(engine, cfg)
 
 		reqBody, err := json.Marshal(model.ListenBrainzSubmitRequest{

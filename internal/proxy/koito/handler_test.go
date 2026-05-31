@@ -13,6 +13,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"koito_proxy/internal/config"
+	"koito_proxy/internal/model"
 	"koito_proxy/internal/proxy/koito"
 	"koito_proxy/internal/rules"
 
@@ -99,7 +100,7 @@ var _ = Describe("InterceptMerge", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		store := rules.NewStore(db)
-		engine := rules.NewRuleEngine([]rules.Rule{})
+		engine := rules.NewRuleEngine([]model.Rule{})
 		h := koito.NewHandler(engine, store, cfg)
 
 		reqBody, err := json.Marshal(map[string]interface{}{"merge_from_id": 123})

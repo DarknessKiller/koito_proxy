@@ -3,6 +3,7 @@ package rules
 import (
 	"context"
 	"database/sql"
+	"koito_proxy/internal/model"
 	"log/slog"
 )
 
@@ -14,7 +15,7 @@ func NewStore(db *sql.DB) *Store {
 	return &Store{db: db}
 }
 
-func (s *Store) Load(ctx context.Context) ([]Rule, error) {
+func (s *Store) Load(ctx context.Context) ([]model.Rule, error) {
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT
 			id,
@@ -32,10 +33,10 @@ func (s *Store) Load(ctx context.Context) ([]Rule, error) {
 	}
 	defer rows.Close()
 
-	var out []Rule
+	var out []model.Rule
 
 	for rows.Next() {
-		var r Rule
+		var r model.Rule
 		if err := rows.Scan(
 			&r.ID,
 			&r.MatchTrackName,
@@ -58,7 +59,7 @@ func (s *Store) Load(ctx context.Context) ([]Rule, error) {
 	return out, nil
 }
 
-func (s *Store) Add(ctx context.Context, r Rule) error {
+func (s *Store) Add(ctx context.Context, r model.Rule) error {
 	existing, err := s.Load(ctx)
 	if err != nil {
 		return err
@@ -86,7 +87,7 @@ func (s *Store) Add(ctx context.Context, r Rule) error {
 	return err
 }
 
-func ruleEqual(a, b Rule) bool {
+func ruleEqual(a, b model.Rule) bool {
 	return nullStringEqual(a.MatchTrackName, b.MatchTrackName) &&
 		nullStringEqual(a.MatchArtistName, b.MatchArtistName) &&
 		nullStringEqual(a.MatchReleaseName, b.MatchReleaseName) &&

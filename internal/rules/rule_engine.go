@@ -12,10 +12,10 @@ var (
 )
 
 type engineState struct {
-	artistIndex  map[string][]Rule
-	trackIndex   map[string][]Rule
-	releaseIndex map[string][]Rule
-	global       []Rule
+	artistIndex  map[string][]model.Rule
+	trackIndex   map[string][]model.Rule
+	releaseIndex map[string][]model.Rule
+	global       []model.Rule
 }
 
 type RuleEngine struct {
@@ -23,13 +23,13 @@ type RuleEngine struct {
 	writeMu sync.Mutex
 }
 
-func NewRuleEngine(rules []Rule) *RuleEngine {
+func NewRuleEngine(rules []model.Rule) *RuleEngine {
 	e := &RuleEngine{}
 
 	s := &engineState{
-		artistIndex:  map[string][]Rule{},
-		trackIndex:   map[string][]Rule{},
-		releaseIndex: map[string][]Rule{},
+		artistIndex:  map[string][]model.Rule{},
+		trackIndex:   map[string][]model.Rule{},
+		releaseIndex: map[string][]model.Rule{},
 	}
 
 	for _, r := range rules {
@@ -51,7 +51,7 @@ func (e *RuleEngine) Apply(metadata *model.ListenBrainzTrackMetaData) {
 		return
 	}
 
-	var candidates []Rule
+	var candidates []model.Rule
 
 	if rs, ok := s.artistIndex[metadata.ArtistName]; ok {
 		candidates = append(candidates, rs...)
@@ -87,7 +87,7 @@ func (e *RuleEngine) Apply(metadata *model.ListenBrainzTrackMetaData) {
 	}
 }
 
-func (e *RuleEngine) Add(r Rule) error {
+func (e *RuleEngine) Add(r model.Rule) error {
 	if err := ValidateRule(r); err != nil {
 		return err
 	}
@@ -112,9 +112,9 @@ func (e *RuleEngine) Delete(id int64) {
 	current := e.state.Load()
 
 	next := &engineState{
-		artistIndex:  make(map[string][]Rule, len(current.artistIndex)),
-		trackIndex:   make(map[string][]Rule, len(current.trackIndex)),
-		releaseIndex: make(map[string][]Rule, len(current.releaseIndex)),
+		artistIndex:  make(map[string][]model.Rule, len(current.artistIndex)),
+		trackIndex:   make(map[string][]model.Rule, len(current.trackIndex)),
+		releaseIndex: make(map[string][]model.Rule, len(current.releaseIndex)),
 	}
 
 	for k, rules := range current.artistIndex {
@@ -148,8 +148,8 @@ func (e *RuleEngine) Delete(id int64) {
 	e.state.Store(next)
 }
 
-func keepRulesExcept(rules []Rule, id int64) []Rule {
-	filtered := make([]Rule, 0, len(rules))
+func keepRulesExcept(rules []model.Rule, id int64) []model.Rule {
+	filtered := make([]model.Rule, 0, len(rules))
 
 	for _, r := range rules {
 		if r.ID == id {
@@ -162,7 +162,7 @@ func keepRulesExcept(rules []Rule, id int64) []Rule {
 	return filtered
 }
 
-func addToState(s *engineState, r Rule) {
+func addToState(s *engineState, r model.Rule) {
 	if !r.MatchArtistName.Valid &&
 		!r.MatchTrackName.Valid &&
 		!r.MatchReleaseName.Valid {
@@ -189,28 +189,28 @@ func addToState(s *engineState, r Rule) {
 
 func cloneState(old *engineState) *engineState {
 	s := &engineState{
-		artistIndex:  make(map[string][]Rule, len(old.artistIndex)),
-		trackIndex:   make(map[string][]Rule, len(old.trackIndex)),
-		releaseIndex: make(map[string][]Rule, len(old.releaseIndex)),
-		global:       append([]Rule(nil), old.global...),
+		artistIndex:  make(map[string][]model.Rule, len(old.artistIndex)),
+		trackIndex:   make(map[string][]model.Rule, len(old.trackIndex)),
+		releaseIndex: make(map[string][]model.Rule, len(old.releaseIndex)),
+		global:       append([]model.Rule(nil), old.global...),
 	}
 
 	for k, v := range old.artistIndex {
-		s.artistIndex[k] = append([]Rule(nil), v...)
+		s.artistIndex[k] = append([]model.Rule(nil), v...)
 	}
 
 	for k, v := range old.trackIndex {
-		s.trackIndex[k] = append([]Rule(nil), v...)
+		s.trackIndex[k] = append([]model.Rule(nil), v...)
 	}
 
 	for k, v := range old.releaseIndex {
-		s.releaseIndex[k] = append([]Rule(nil), v...)
+		s.releaseIndex[k] = append([]model.Rule(nil), v...)
 	}
 
 	return s
 }
 
-func match(r Rule, m *model.ListenBrainzTrackMetaData) bool {
+func match(r model.Rule, m *model.ListenBrainzTrackMetaData) bool {
 	if r.MatchArtistName.Valid && r.MatchArtistName.String != m.ArtistName {
 		return false
 	}
@@ -223,7 +223,7 @@ func match(r Rule, m *model.ListenBrainzTrackMetaData) bool {
 	return r.MatchArtistName.Valid || r.MatchTrackName.Valid || r.MatchReleaseName.Valid
 }
 
-func ValidateRule(r Rule) error {
+func ValidateRule(r model.Rule) error {
 	if r.ReplaceArtistName.Valid {
 		if !r.MatchTrackName.Valid {
 			return ErrArtistReplacementRequiresTrackMatch

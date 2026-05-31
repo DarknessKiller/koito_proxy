@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"koito_proxy/internal/config"
+	"koito_proxy/internal/model"
 	"koito_proxy/internal/rules"
 
 	"github.com/gin-gonic/gin"
@@ -180,7 +181,7 @@ func (h *Handler) addMergeRule(ctx context.Context, entity, targetID string, sou
 		sourceArtist := source.Artists[0].Name
 		targetArtist := target.Artists[0].Name
 
-		rule := rules.Rule{
+		rule := model.Rule{
 			MatchTrackName:     newNullString(source.Title),
 			MatchArtistName:    newNullString(sourceArtist),
 			MatchReleaseName:   newNullString(sourceAlbum.Title),
@@ -204,7 +205,7 @@ func (h *Handler) addMergeRule(ctx context.Context, entity, targetID string, sou
 			return fmt.Errorf("fetch target artist: %w", err)
 		}
 
-		rule := rules.Rule{
+		rule := model.Rule{
 			MatchArtistName:   newNullString(source.Name),
 			ReplaceArtistName: newNullString(target.Name),
 		}
