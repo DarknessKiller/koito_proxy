@@ -99,7 +99,6 @@ type koitoAlbum struct {
 }
 
 func (h *Handler) InterceptMerge(c *gin.Context) {
-	ctx := c.Request.Context()
 	entity := c.Param("entity")
 	targetID := c.Param("id")
 
@@ -109,17 +108,25 @@ func (h *Handler) InterceptMerge(c *gin.Context) {
 		return
 	}
 
-	if err := h.addMergeRule(ctx, entity, targetID, req.MergeFromID); err != nil {
-		slog.Error("koito merge rule add failed", "entity", entity, "target_id", targetID, "merge_from_id", req.MergeFromID, "error", err)
+	if h.engine != nil {
+		if err := h.addMergeRule(c.Request.Context(), entity, targetID, req.MergeFromID); err != nil {
+			slog.Error("koito merge rule add failed", "entity", entity, "target_id", targetID, "merge_from_id", req.MergeFromID, "error", err)
+		}
 	}
 
-	// build target using route builder
+	modifiedBytes, err := json.Marshal(req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	targetURL, err := newPathBuilder().MergeEntity().URLWithParams(h.config.UpstreamURL, map[string]string{"entity": entity, "id": targetID})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	proxyReq, err := http.NewRequestWithContext(ctx, c.Request.Method, targetURL.String(), c.Request.Body)
+
+	proxyReq, err := http.NewRequestWithContext(c, c.Request.Method, targetURL.String(), bytes.NewReader(modifiedBytes))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -132,7 +139,11 @@ func (h *Handler) InterceptMerge(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 
-	respBody, _ := io.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
 	c.Data(resp.StatusCode, resp.Header.Get("Content-Type"), respBody)
 }

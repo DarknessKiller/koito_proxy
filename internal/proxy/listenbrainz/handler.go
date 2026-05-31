@@ -10,7 +10,6 @@ import (
 	"log/slog"
 
 	"net/http"
-	"net/url"
 
 	"github.com/gin-gonic/gin"
 )
@@ -27,10 +26,6 @@ func NewHandler(e *rules.Engine, cfg *config.Config) *Handler {
 	}
 }
 
-func (h *Handler) targetURL(apiPath APIPath) (*url.URL, error) {
-	return apiPath.URL(h.config.UpstreamURL)
-}
-
 func (h *Handler) InterceptSubmitListen(c *gin.Context) {
 	var req model.ListenBrainzSubmitRequest
 
@@ -45,14 +40,13 @@ func (h *Handler) InterceptSubmitListen(c *gin.Context) {
 		}
 	}
 
-	modified, err := json.Marshal(&req)
+	modifiedBytes, err := json.Marshal(req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	pathBuilder := newPathBuilder()
-	targetURL, err := h.targetURL(pathBuilder.SubmitListen())
+	targetURL, err := newPathBuilder().SubmitListen().URL(h.config.UpstreamURL)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -62,20 +56,12 @@ func (h *Handler) InterceptSubmitListen(c *gin.Context) {
 		c.Request.Context(),
 		c.Request.Method,
 		targetURL.String(),
-		bytes.NewReader(modified),
+		bytes.NewReader(modifiedBytes),
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	for k, v := range c.Request.Header {
-		for _, vv := range v {
-			proxyReq.Header.Add(k, vv)
-		}
-	}
-
-	proxyReq.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(proxyReq)
 	if err != nil {
@@ -84,8 +70,15 @@ func (h *Handler) InterceptSubmitListen(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 
-	slog.Info("koito submit listen intercepted", "original_body", c.Request.Body, "modified_body", string(modified))
-	respBody, _ := io.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	slog.Info("koito submit listen intercepted",
+		"modified_body", string(modifiedBytes),
+	)
 
 	c.Data(resp.StatusCode, resp.Header.Get("Content-Type"), respBody)
 }
