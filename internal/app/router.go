@@ -14,10 +14,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (a *App) SetupRouter() *gin.Engine {
-	gin.SetMode(gin.ReleaseMode)
+func (a *App) SetupRoute() {
 
-	r := gin.New()
+	r := a.engine
 
 	r.Use(
 		limit.BodyLimitMiddleware(5),
@@ -27,6 +26,7 @@ func (a *App) SetupRouter() *gin.Engine {
 	)
 
 	cache := auth.NewCache()
+
 	lbAuth := auth.NewListenBrainzAuth(a.bs.Config, cache)
 	koitoAuth := auth.NewKoitoAuth(a.bs.Config, cache)
 
@@ -54,8 +54,6 @@ func (a *App) SetupRouter() *gin.Engine {
 	r.NoRoute(func(c *gin.Context) {
 		fallbackProxy(c)
 	})
-
-	return r
 }
 
 func GinSlogLogger() gin.HandlerFunc {

@@ -3,10 +3,13 @@ package app
 import (
 	"koito_proxy/internal/bootstrap"
 	"log/slog"
+
+	"github.com/gin-gonic/gin"
 )
 
 type App struct {
-	bs *bootstrap.Bootstrap
+	bs     *bootstrap.Bootstrap
+	engine *gin.Engine
 }
 
 func New() (*App, error) {
@@ -15,14 +18,23 @@ func New() (*App, error) {
 		return nil, err
 	}
 
-	return &App{bs: bs}, nil
+	gin.SetMode(gin.ReleaseMode)
+
+	app := &App{
+		bs:     bs,
+		engine: gin.New(),
+	}
+
+	app.SetupRoute()
+
+	return app, nil
 }
 
 func (a *App) Run() error {
-	r := a.SetupRouter()
-	if err := r.Run(":" + a.bs.Config.Port); err != nil {
+	if err := a.engine.Run(":" + a.bs.Config.Port); err != nil {
 		slog.Error("failed to run server", "error", err)
 		return err
 	}
+
 	return nil
 }
