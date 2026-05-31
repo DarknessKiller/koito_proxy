@@ -103,14 +103,8 @@ func (h *Handler) InterceptMerge(c *gin.Context) {
 	entity := c.Param("entity")
 	targetID := c.Param("id")
 
-	body, err := io.ReadAll(c.Request.Body)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
 	var req mergeRequest
-	if err := json.Unmarshal(body, &req); err != nil {
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -125,13 +119,11 @@ func (h *Handler) InterceptMerge(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	proxyReq, err := http.NewRequestWithContext(ctx, c.Request.Method, targetURL.String(), bytes.NewReader(body))
+	proxyReq, err := http.NewRequestWithContext(ctx, c.Request.Method, targetURL.String(), c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	copyHeaders(proxyReq.Header, c.Request.Header)
 
 	resp, err := http.DefaultClient.Do(proxyReq)
 	if err != nil {
@@ -141,7 +133,7 @@ func (h *Handler) InterceptMerge(c *gin.Context) {
 	defer resp.Body.Close()
 
 	respBody, _ := io.ReadAll(resp.Body)
-	copyHeaders(c.Writer.Header(), resp.Header)
+
 	c.Data(resp.StatusCode, resp.Header.Get("Content-Type"), respBody)
 }
 
@@ -312,14 +304,6 @@ func (h *Handler) fetchUpstreamAPI(ctx context.Context, method string, api APIPa
 	}
 
 	return data, nil
-}
-
-func copyHeaders(dst, src http.Header) {
-	for k, values := range src {
-		for _, v := range values {
-			dst.Add(k, v)
-		}
-	}
 }
 
 func newNullString(value string) sql.NullString {

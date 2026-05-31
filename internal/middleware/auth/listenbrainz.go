@@ -33,7 +33,7 @@ func (a *ListenBrainzAuth) Middleware() gin.HandlerFunc {
 			return
 		}
 
-		if !a.validateUpstream(token) {
+		if !a.validateUpstream(c, token) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
 			c.Abort()
 			return
@@ -45,7 +45,7 @@ func (a *ListenBrainzAuth) Middleware() gin.HandlerFunc {
 }
 
 // validateUpstream calls ListenBrainz API to verify the token
-func (a *ListenBrainzAuth) validateUpstream(token string) bool {
+func (a *ListenBrainzAuth) validateUpstream(c *gin.Context, token string) bool {
 	pathBuilder := newPathBuilder()
 	targetURL, err := a.targetURL(pathBuilder.LBAuthorization())
 	if err != nil {
@@ -59,8 +59,8 @@ func (a *ListenBrainzAuth) validateUpstream(token string) bool {
 
 	req.Header.Set("Authorization", token)
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	client := httpClient()
+	resp, err := client.Do(req.WithContext(c.Request.Context()))
 	if err != nil {
 		return false
 	}

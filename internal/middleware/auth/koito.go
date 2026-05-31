@@ -33,7 +33,7 @@ func (a *KoitoAuth) Middleware() gin.HandlerFunc {
 			return
 		}
 
-		if !a.validateUpstream(session) {
+		if !a.validateUpstream(c, session) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid session"})
 			c.Abort()
 			return
@@ -45,7 +45,7 @@ func (a *KoitoAuth) Middleware() gin.HandlerFunc {
 }
 
 // validateUpstream calls ListenBrainz API to verify the token
-func (a *KoitoAuth) validateUpstream(token string) bool {
+func (a *KoitoAuth) validateUpstream(c *gin.Context, token string) bool {
 	pathBuilder := newPathBuilder()
 	targetURL, err := a.targetURL(pathBuilder.KoitoAuthorization())
 	if err != nil {
@@ -62,8 +62,8 @@ func (a *KoitoAuth) validateUpstream(token string) bool {
 		Value: token,
 	})
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	client := httpClient()
+	resp, err := client.Do(req.WithContext(c.Request.Context()))
 	if err != nil {
 		return false
 	}

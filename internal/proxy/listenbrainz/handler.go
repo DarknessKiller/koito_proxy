@@ -7,8 +7,8 @@ import (
 	"koito_proxy/internal/config"
 	"koito_proxy/internal/model"
 	"koito_proxy/internal/rules"
-
 	"log/slog"
+
 	"net/http"
 	"net/url"
 
@@ -32,14 +32,9 @@ func (h *Handler) targetURL(apiPath APIPath) (*url.URL, error) {
 }
 
 func (h *Handler) InterceptSubmitListen(c *gin.Context) {
-	body, err := io.ReadAll(c.Request.Body)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
 	var req model.ListenBrainzSubmitRequest
-	if err := json.Unmarshal(body, &req); err != nil {
+
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -56,14 +51,6 @@ func (h *Handler) InterceptSubmitListen(c *gin.Context) {
 		return
 	}
 
-	var compactOriginal bytes.Buffer
-	var compactModified bytes.Buffer
-
-	json.Compact(&compactOriginal, body)
-	json.Compact(&compactModified, modified)
-
-	slog.Info("koito submit listen intercepted", "original_body", compactOriginal.Bytes(), "modified_body", compactModified.Bytes())
-
 	pathBuilder := newPathBuilder()
 	targetURL, err := h.targetURL(pathBuilder.SubmitListen())
 	if err != nil {
@@ -71,7 +58,12 @@ func (h *Handler) InterceptSubmitListen(c *gin.Context) {
 		return
 	}
 
-	proxyReq, err := http.NewRequestWithContext(c.Request.Context(), c.Request.Method, targetURL.String(), bytes.NewReader(modified))
+	proxyReq, err := http.NewRequestWithContext(
+		c.Request.Context(),
+		c.Request.Method,
+		targetURL.String(),
+		bytes.NewReader(modified),
+	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -92,13 +84,8 @@ func (h *Handler) InterceptSubmitListen(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 
+	slog.Info("koito submit listen intercepted", "original_body", c.Request.Body, "modified_body", string(modified))
 	respBody, _ := io.ReadAll(resp.Body)
-
-	for k, v := range resp.Header {
-		for _, vv := range v {
-			c.Writer.Header().Add(k, vv)
-		}
-	}
 
 	c.Data(resp.StatusCode, resp.Header.Get("Content-Type"), respBody)
 }

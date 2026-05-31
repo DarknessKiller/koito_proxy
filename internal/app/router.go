@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"koito_proxy/internal/middleware/auth"
-	rt "koito_proxy/internal/middleware/ratelimiter"
+	"koito_proxy/internal/middleware/limit"
 	"koito_proxy/internal/proxy"
 	"koito_proxy/internal/proxy/koito"
 	"koito_proxy/internal/proxy/listenbrainz"
@@ -20,7 +20,8 @@ func (a *App) SetupRouter() *gin.Engine {
 	r := gin.New()
 
 	r.Use(
-		rt.RateLimiterMiddleware(50, 100),
+		limit.BodyLimitMiddleware(5),
+		limit.RateLimiterMiddleware(50, 100),
 		GinSlogLogger(),
 		gin.Recovery(),
 	)
