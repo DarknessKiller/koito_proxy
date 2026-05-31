@@ -4,7 +4,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN GOOS=linux go build -o koito_proxy ./cmd/proxy
+RUN GOOS=linux go build -o koito_proxy ./cmd/app
 
 # App image
 FROM alpine:latest
