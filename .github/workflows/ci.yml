@@ -2,9 +2,18 @@ name: Go Test
 
 on:
   push:
-    branches: [ main, development ]
+    branches: [ master, development ]
+    paths:
+      - '**/*.go'
+      - 'go.mod'
+      - 'go.sum'
+
   pull_request:
-    branches: [ main, development ]
+    branches: [ master, development ]
+    paths:
+      - '**/*.go'
+      - 'go.mod'
+      - 'go.sum'
 
 jobs:
   go-test:
