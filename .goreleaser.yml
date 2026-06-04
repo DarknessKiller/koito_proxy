@@ -1,0 +1,51 @@
+version: 2
+
+project_name: koito_proxy
+
+builds:
+  - id: koito_proxy
+    main: ./cmd/app
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+
+dockers_v2:
+  - id: koito_proxy_image
+    ids:
+      - koito_proxy
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    images:
+      - "ghcr.io/darknesskiller/koito_proxy"
+    dockerfile: Dockerfile.goreleaser
+    tags:
+      - "v{{ .Version }}"
+      - '{{ if not (contains .Version "-") }}latest{{ end }}'
+    labels:
+      org.opencontainers.image.description: "Koito Proxy"
+      org.opencontainers.image.created: "{{ .Date }}"
+      org.opencontainers.image.name: "{{ .ProjectName }}"
+      org.opencontainers.image.revision: "{{ .FullCommit }}"
+      org.opencontainers.image.version: "{{ .Version }}"
+      org.opencontainers.image.source: "{{ .GitURL }}"
+
+release:
+  github:
+    owner: "{{ .Env.GITHUB_REPOSITORY_OWNER }}"
+  draft: false
+  prerelease: auto
+  mode: replace
+
+changelog:
+  use: github
+  sort: asc

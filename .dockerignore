@@ -1,5 +1,7 @@
 .git
 .github
+.goreleaser.yml
+.release-config.json
 .gitignore
 .DS_Store
 *.db

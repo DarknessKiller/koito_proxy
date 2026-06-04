@@ -1,0 +1,10 @@
+# App image
+FROM scratch
+WORKDIR /app
+ARG TARGETPLATFORM
+COPY $TARGETPLATFORM/koito_proxy koito_proxy
+VOLUME ["/app/data"]
+ENV PROXY_DB=/app/data/koito_proxy.db
+ENV PROXY_PORT=4112
+EXPOSE 4112
+ENTRYPOINT ["/app/koito_proxy"]

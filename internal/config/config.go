@@ -3,8 +3,6 @@ package config
 import (
 	"log/slog"
 	"os"
-
-	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -14,12 +12,9 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
-
-	_ = godotenv.Load()
-
 	return &Config{
 		Port:        checkEnv("PROXY_PORT", "4112"),
-		DBPath:      checkEnv("PROXY_DB", "/app/data/koito.db"),
+		DBPath:      checkEnv("PROXY_DB", "./koito_proxy.db"),
 		UpstreamURL: checkEnv("KOITO_URL", "http://localhost:4110"),
 	}, nil
 }

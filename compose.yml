@@ -1,9 +1,10 @@
 services:
   koito-proxy:
     container_name: koito-proxy
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/darknesskiller/koito_proxy:latest
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
     environment:
       - KOITO_URL=http://localhost:4110
     volumes:

@@ -4,14 +4,16 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN GOOS=linux go build -o koito_proxy ./cmd/app
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o koito_proxy ./cmd/app
 
 # App image
-FROM alpine:latest
+FROM scratch
 WORKDIR /app
-RUN apk add --no-cache tzdata
-COPY --from=builder /app/koito_proxy .
-RUN mkdir -p /app/data
+COPY --from=builder /app/koito_proxy koito_proxy
 VOLUME ["/app/data"]
+
+ENV PROXY_DB=/app/data/koito_proxy.db
+ENV PROXY_PORT=4112
+
 EXPOSE 4112
 ENTRYPOINT ["./koito_proxy"]
