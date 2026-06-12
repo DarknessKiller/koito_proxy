@@ -13,7 +13,6 @@ func RegisterRoutes(group *gin.RouterGroup, repo repository.Repository[model.Rul
 
 	h := NewHandler(repo, engine)
 
-	group.GET("/check", h.CheckAuth)
 	group.GET("/rules", h.ListRules)
 	group.GET("/rules/:id", h.GetRule)
 	group.POST("/rules", h.CreateRule)
