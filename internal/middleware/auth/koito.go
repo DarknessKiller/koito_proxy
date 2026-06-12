@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"koito_proxy/internal/config"
 	"koito_proxy/internal/response"
 	"log/slog"
@@ -36,7 +37,7 @@ func (a *KoitoAuth) Middleware() gin.HandlerFunc {
 			return
 		}
 
-		if !a.validateUpstream(c, session) {
+		if !a.validateUpstream(c.Request.Context(), session) {
 			slog.Warn("koito session validation failed", "path", c.Request.URL.Path)
 			response.RespondUnauthorized(c, response.ErrInvalidKoitoSession)
 			c.Abort()
@@ -48,7 +49,7 @@ func (a *KoitoAuth) Middleware() gin.HandlerFunc {
 	}
 }
 
-func (a *KoitoAuth) validateUpstream(c *gin.Context, token string) bool {
+func (a *KoitoAuth) validateUpstream(ctx context.Context, token string) bool {
 	pathBuilder := newPathBuilder()
 	targetURL, err := a.targetURL(pathBuilder.KoitoAuthorization())
 	if err != nil {
@@ -56,7 +57,7 @@ func (a *KoitoAuth) validateUpstream(c *gin.Context, token string) bool {
 		return false
 	}
 
-	req, err := http.NewRequest("GET", targetURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", targetURL.String(), nil)
 	if err != nil {
 		slog.Error("failed to create koito auth request", "error", err)
 		return false
@@ -67,7 +68,7 @@ func (a *KoitoAuth) validateUpstream(c *gin.Context, token string) bool {
 		Value: token,
 	})
 
-	resp, err := a.httpClient.Do(req.WithContext(c.Request.Context()))
+	resp, err := a.httpClient.Do(req)
 	if err != nil {
 		slog.Error("failed to validate koito session upstream", "error", err)
 		return false
@@ -80,6 +81,29 @@ func (a *KoitoAuth) validateUpstream(c *gin.Context, token string) bool {
 
 	slog.Warn("koito validation failed with upstream", "status", resp.StatusCode)
 	return false
+}
+
+func (a *KoitoAuth) HasValidSession(r *http.Request) bool {
+	if r == nil {
+		return false
+	}
+
+	session, err := r.Cookie("koito_session")
+	if err != nil || session.Value == "" {
+		return false
+	}
+
+	token := session.Value
+	if ok, found := a.cache.Get(token); found {
+		return ok
+	}
+
+	if !a.validateUpstream(r.Context(), token) {
+		return false
+	}
+
+	a.cache.Set(token, 5*time.Minute)
+	return true
 }
 
 func (a *KoitoAuth) targetURL(apiPath APIPath) (*url.URL, error) {

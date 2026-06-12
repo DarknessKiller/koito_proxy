@@ -56,10 +56,6 @@ type RuleResponse struct {
 	UpdatedAt           string   `json:"updated_at"`
 }
 
-func (h *Handler) CheckAuth(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"ok": true})
-}
-
 func (h *Handler) ListRules(c *gin.Context) {
 	rules, err := h.repo.GetAll(c.Request.Context())
 	if err != nil {

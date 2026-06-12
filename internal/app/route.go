@@ -36,7 +36,7 @@ func (a *App) SetupRoute() {
 	lbHandler := listenbrainz.NewHandler(a.ruleEngine, a.config)
 	koitoHandler := koito.NewHandler(a.ruleEngine, a.repository, a.config)
 
-	fallbackProxy := proxy.New(a.config).Handler()
+	fallbackProxy := proxy.New(a.config, koitoAuth.HasValidSession).Handler()
 
 	r.GET("/apis/health", func(c *gin.Context) {
 

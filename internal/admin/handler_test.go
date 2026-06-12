@@ -119,17 +119,6 @@ var _ = Describe("Admin Handler", func() {
 		return rec
 	}
 
-	Describe("CheckAuth", func() {
-		It("returns 200", func() {
-			rec := call("GET", "/apis/admin/check", nil, h.CheckAuth)
-
-			Expect(rec.Code).To(Equal(http.StatusOK))
-			var resp map[string]any
-			Expect(json.Unmarshal(rec.Body.Bytes(), &resp)).To(Succeed())
-			Expect(resp["ok"]).To(BeTrue())
-		})
-	})
-
 	Describe("ListRules", func() {
 		It("returns all rules", func() {
 			mockRepo.GetAllFunc = func(ctx context.Context) ([]model.Rule, error) {
