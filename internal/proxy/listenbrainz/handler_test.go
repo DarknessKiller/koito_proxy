@@ -26,6 +26,9 @@ func TestListenBrainz(t *testing.T) {
 }
 
 var _ = Describe("Intercept.SubmitListen", func() {
+	BeforeEach(func() {
+		gin.SetMode(gin.TestMode)
+	})
 	It("applies rule substitutions before proxying to upstream", func() {
 		upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			Expect(r.Method).To(Equal(http.MethodPost))
@@ -52,7 +55,7 @@ var _ = Describe("Intercept.SubmitListen", func() {
 			MatchArtistName:   sql.NullString{String: "Old Artist", Valid: true},
 			ReplaceTrackName:  sql.NullString{String: "New Track", Valid: true},
 			ReplaceArtistName: sql.NullString{String: "New Artist", Valid: true},
-			Enabled:           true,
+			Enabled:           new(true),
 		}
 		engine := rules.NewRuleEngine()
 		engine.UpdateRules([]model.Rule{rule})
