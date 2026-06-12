@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"koito_proxy/internal/admin"
 	"koito_proxy/internal/middleware"
 	"koito_proxy/internal/middleware/auth"
 	"koito_proxy/internal/middleware/limit"
@@ -22,6 +23,7 @@ func (a *App) SetupRoute() {
 	r.Use(
 		limit.BodyLimitMiddleware(5),
 		limit.RateLimiterMiddleware(50, 100),
+		middleware.RequestIDMiddleware(),
 		GinSlogLogger(),
 		gin.Recovery(),
 	)
@@ -53,15 +55,20 @@ func (a *App) SetupRoute() {
 	r.POST(
 		"/apis/listenbrainz/1/submit-listens",
 		lbAuth.Middleware(),
-		middleware.RequestIDMiddleware(),
 		lbHandler.InterceptSubmitListen,
 	)
 
 	r.POST(
 		"/apis/web/v1/:entity/:id/merge",
 		koitoAuth.Middleware(),
-		middleware.RequestIDMiddleware(),
 		koitoHandler.InterceptMerge,
+	)
+
+	admin.RegisterRoutes(
+		r.Group("/apis/admin"),
+		a.repository,
+		a.ruleEngine,
+		koitoAuth.Middleware(),
 	)
 
 	r.NoRoute(func(c *gin.Context) {

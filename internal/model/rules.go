@@ -14,6 +14,6 @@ type Rule struct {
 	ReplaceArtistName   sql.NullString `gorm:"type:varchar(255)"`
 	ReplaceReleaseName  sql.NullString `gorm:"type:varchar(255)"`
 	ReplaceArtistNames  []string       `gorm:"serializer:json"`
-	Enabled             bool           `gorm:"not null;default:true"`
+	Enabled             *bool          `gorm:"not null;default:true"`
 	Timestamps
 }

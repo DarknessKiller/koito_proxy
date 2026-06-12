@@ -213,7 +213,7 @@ func (h *Handler) addMergeRule(ctx context.Context, entity, targetID string, sou
 			ReplaceArtistName:  newNullString(matchReplaceArtists[0]),
 			ReplaceArtistNames: matchReplaceArtists,
 			ReplaceReleaseName: newNullString(targetAlbum.Title),
-			Enabled:            true,
+			Enabled:            new(true),
 		}
 
 		if err := h.rule.Create(ctx, &rule); err != nil {
@@ -234,7 +234,7 @@ func (h *Handler) addMergeRule(ctx context.Context, entity, targetID string, sou
 		rule := model.Rule{
 			MatchArtistName:   newNullString(source.Name),
 			ReplaceArtistName: newNullString(target.Name),
-			Enabled:           true,
+			Enabled:           new(true),
 		}
 
 		if err := h.rule.Create(ctx, &rule); err != nil {

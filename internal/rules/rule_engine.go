@@ -57,7 +57,7 @@ func (e *RuleEngine) UpdateRules(rules []model.Rule) {
 	compiled := make([]CompiledRule, 0, len(rules))
 
 	for _, rule := range rules {
-		if !rule.Enabled {
+		if rule.Enabled != nil && !*rule.Enabled {
 			continue
 		}
 
@@ -74,10 +74,9 @@ func (e *RuleEngine) UpdateRules(rules []model.Rule) {
 }
 
 func (e *RuleEngine) Add(rule model.Rule) {
-	if !rule.Enabled {
+	if rule.Enabled != nil && !*rule.Enabled {
 		return
 	}
-
 	compiledRule := compileRule(rule)
 
 	if !compiledRule.Valid {
@@ -311,4 +310,24 @@ func (e *RuleEngine) Apply(
 	for _, rule := range matchingRules {
 		rule.Apply(metadata)
 	}
+}
+
+func CompileRule(rule model.Rule) CompiledRule {
+	return compileRule(rule)
+}
+
+func (e *RuleEngine) Remove(id ksuid.KSUID) {
+	oldState := e.state.Load()
+	if oldState == nil {
+		return
+	}
+
+	next := make([]CompiledRule, 0, len(oldState.rules))
+	for _, r := range oldState.rules {
+		if r.ID != id {
+			next = append(next, r)
+		}
+	}
+
+	e.state.Store(&engineState{rules: next})
 }

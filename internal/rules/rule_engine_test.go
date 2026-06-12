@@ -71,7 +71,7 @@ var _ = Describe("RuleEngine.Apply", func() {
 							String: "New Track",
 							Valid:  true,
 						},
-						Enabled: true,
+						Enabled: new(true),
 					},
 				}, nil
 			},
@@ -105,7 +105,7 @@ var _ = Describe("RuleEngine.Apply", func() {
 							String: "Artist A1",
 							Valid:  true,
 						},
-						Enabled: true,
+						Enabled: new(true),
 					},
 				}, nil
 			},
@@ -144,7 +144,7 @@ var _ = Describe("RuleEngine.Apply", func() {
 							String: "New Track",
 							Valid:  true,
 						},
-						Enabled: true,
+						Enabled: new(true),
 					},
 				}, nil
 			},
@@ -182,7 +182,7 @@ var _ = Describe("RuleEngine.Apply", func() {
 							String: "New Track",
 							Valid:  true,
 						},
-						Enabled: true,
+						Enabled: new(true),
 					},
 				}, nil
 			},
@@ -219,7 +219,7 @@ var _ = Describe("RuleEngine.Apply", func() {
 							String: "Album",
 							Valid:  true,
 						},
-						Enabled: true,
+						Enabled: new(true),
 					},
 				}, nil
 			},
@@ -260,7 +260,7 @@ var _ = Describe("RuleEngine.Apply", func() {
 						},
 						MatchArtistNames:   []string{"Artist A"},
 						ReplaceArtistNames: []string{"Artist A1"},
-						Enabled:            true,
+						Enabled:            new(true),
 					},
 				}, nil
 			},
