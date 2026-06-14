@@ -22,15 +22,14 @@ func NewCache() *Cache {
 
 func (c *Cache) Get(key string) (bool, bool) {
 	c.mu.RLock()
-	defer c.mu.RUnlock()
-
 	item, ok := c.items[key]
+	c.mu.RUnlock()
+
 	if !ok {
 		return false, false
 	}
 
 	if time.Now().After(item.ExpiresAt) {
-		c.mu.RUnlock()
 		c.mu.Lock()
 		delete(c.items, key)
 		c.mu.Unlock()

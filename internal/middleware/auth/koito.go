@@ -44,7 +44,7 @@ func (a *KoitoAuth) Middleware() gin.HandlerFunc {
 			return
 		}
 
-		a.cache.Set(session, 15*time.Minute)
+		a.cache.Set(session, 5*time.Minute)
 		c.Next()
 	}
 }
@@ -102,7 +102,7 @@ func (a *KoitoAuth) HasValidSession(r *http.Request) bool {
 		return false
 	}
 
-	a.cache.Set(token, 15*time.Minute)
+	a.cache.Set(token, 2*time.Minute)
 	return true
 }
 
