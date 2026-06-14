@@ -49,6 +49,16 @@ func (p *Proxy) Handler() func(c *gin.Context) {
 
 func injectOverlay(r *http.Response) error {
 	isAuth, _ := r.Request.Context().Value("is_authenticated").(bool)
+
+	for _, v := range r.Header.Values("Set-Cookie") {
+		if strings.HasPrefix(v, "koito_session") {
+			r.Header.Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			r.Header.Set("Pragma", "no-cache")
+			r.Header.Set("Expires", "0")
+			break
+		}
+	}
+
 	if !isAuth || !strings.HasPrefix(r.Header.Get("Content-Type"), "text/html") {
 		return nil
 	}
