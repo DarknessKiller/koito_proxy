@@ -155,14 +155,7 @@ func (h *Handler) InterceptMerge(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		slog.Error("failed to read proxy response body", "error", err, "entity", entity, "target_id", targetID, "status", resp.StatusCode)
-		response.RespondInternalError(c)
-		return
-	}
-
-	c.Data(resp.StatusCode, resp.Header.Get("Content-Type"), respBody)
+	c.DataFromReader(resp.StatusCode, resp.ContentLength, resp.Header.Get("Content-Type"), resp.Body, nil)
 }
 
 func (h *Handler) addMergeRule(ctx context.Context, entity, targetID string, sourceID int64) error {
