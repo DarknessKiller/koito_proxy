@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"koito_proxy/internal/config"
 	"koito_proxy/internal/response"
 	"log/slog"
@@ -36,19 +37,19 @@ func (a *KoitoAuth) Middleware() gin.HandlerFunc {
 			return
 		}
 
-		if !a.validateUpstream(c, session) {
+		if !a.validateUpstream(c.Request.Context(), session) {
 			slog.Warn("koito session validation failed", "path", c.Request.URL.Path)
 			response.RespondUnauthorized(c, response.ErrInvalidKoitoSession)
 			c.Abort()
 			return
 		}
 
-		a.cache.Set(session, 5*time.Minute)
+		a.cache.Set(session, 15*time.Minute)
 		c.Next()
 	}
 }
 
-func (a *KoitoAuth) validateUpstream(c *gin.Context, token string) bool {
+func (a *KoitoAuth) validateUpstream(ctx context.Context, token string) bool {
 	pathBuilder := newPathBuilder()
 	targetURL, err := a.targetURL(pathBuilder.KoitoAuthorization())
 	if err != nil {
@@ -67,7 +68,7 @@ func (a *KoitoAuth) validateUpstream(c *gin.Context, token string) bool {
 		Value: token,
 	})
 
-	resp, err := a.httpClient.Do(req.WithContext(c.Request.Context()))
+	resp, err := a.httpClient.Do(req.WithContext(ctx))
 	if err != nil {
 		slog.Error("failed to validate koito session upstream", "error", err)
 		return false

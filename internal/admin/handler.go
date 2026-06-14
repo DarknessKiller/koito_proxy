@@ -155,12 +155,6 @@ func (h *Handler) DeleteRule(c *gin.Context) {
 		return
 	}
 
-	if err := h.repo.Delete(c.Request.Context(), id); err != nil {
-		slog.Error("failed to delete rule", "id", id, "error", err)
-		response.RespondInternalError(c)
-		return
-	}
-
 	parsedID, err := ksuid.Parse(id)
 	if err != nil {
 		slog.Error("failed to parse rule id", "id", id, "error", err)

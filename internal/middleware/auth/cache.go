@@ -30,10 +30,8 @@ func (c *Cache) Get(key string) (bool, bool) {
 	}
 
 	if time.Now().After(item.ExpiresAt) {
-		c.mu.RUnlock()
 		c.mu.Lock()
 		delete(c.items, key)
-		c.mu.Unlock()
 		return false, false
 	}
 
