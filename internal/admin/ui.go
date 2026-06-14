@@ -13,7 +13,7 @@ func UIHandler(c *gin.Context) {
 const adminPageHTML = `<!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <style>
 
 #koito-admin-content {
@@ -29,24 +29,23 @@ const adminPageHTML = `<!DOCTYPE html>
   --warning: var(--color-warning);
   --info:    var(--color-info);
   --success: var(--color-success);
-  --radius:  8px;
+  --radius:  10px;
 
-  display: block;
+  display: flex;
+  flex-direction: column;
   box-sizing: border-box;
   font-family: 'Jost', sans-serif;
   background: var(--bg2);
   color: var(--fg);
-  padding: 24px;
   font-size: 14px;
   font-weight: 400;
-  line-height: 1.4;
+  line-height: 1.5;
   border: 1px solid var(--bg3);
   border-radius: var(--radius);
-  width: 100%;
-  min-width: 0;
-  max-height: 85vh;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+
+  width: min(96vw, 1100px);
+  height: min(92vh, 800px);
+  overflow: hidden;
 }
 
 #koito-admin-content * {
@@ -55,46 +54,111 @@ const adminPageHTML = `<!DOCTYPE html>
   padding: 0;
 }
 
-#koito-admin-content h1 {
-  font-family: 'League Spartan', sans-serif;
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 14px;
+#koito-admin-content .kp-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  letter-spacing: .02em;
-  color: var(--fg);
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--bg3);
+  flex-shrink: 0;
 }
 
-#koito-admin-content h1 small {
+#koito-admin-content .kp-header h1 {
+  font-family: 'League Spartan', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  color: var(--fg);
+  margin-right: auto;
+}
+
+#koito-admin-content .kp-header h1 small {
   font-size: 12px;
   color: var(--fg3);
   font-weight: 400;
   font-family: 'Jost', sans-serif;
+  margin-left: 8px;
 }
 
-#koito-admin-content .toolbar {
+#koito-admin-content .kp-close {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 24px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  justify-content: center;
+  color: var(--fg3);
+  line-height: 1;
+  padding: 0;
+  transition: color .1s ease, background .1s ease;
+  font-family: 'Jost', sans-serif;
 }
 
-#koito-admin-content .rule-count {
+#koito-admin-content .kp-close:hover {
+  color: var(--fg);
+  background: var(--bg3);
+}
+
+#koito-admin-content .kp-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--bg3);
+  flex-shrink: 0;
+}
+
+#koito-admin-content .kp-toolbar .rule-count {
   color: var(--fg3);
   font-size: 13px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+#koito-admin-content .kp-search {
+  position: relative;
+  flex: 1;
+  max-width: 280px;
+}
+
+#koito-admin-content .kp-search input {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--bg3);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-family: 'Jost', sans-serif;
+  color: var(--fg);
+  transition: border-color .1s ease;
+  min-height: 40px;
+}
+
+#koito-admin-content .kp-search input:focus {
+  border-color: var(--fg3);
+  outline: none;
+}
+
+#koito-admin-content .kp-search input::placeholder {
+  color: var(--fg3);
+  opacity: .5;
 }
 
 #koito-admin-content .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 8px 20px;
+  padding: 8px 18px;
   border: 1px solid var(--bg3);
   border-radius: var(--radius);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
   font-family: 'Jost', sans-serif;
   font-weight: 500;
   background: var(--bg);
@@ -102,6 +166,8 @@ const adminPageHTML = `<!DOCTYPE html>
   transition: background .1s ease, color .1s ease, border-color .1s ease;
   -webkit-user-select: none;
   user-select: none;
+  white-space: nowrap;
+  min-height: 40px;
 }
 
 #koito-admin-content .btn:hover {
@@ -133,75 +199,70 @@ const adminPageHTML = `<!DOCTYPE html>
 }
 
 #koito-admin-content .btn-sm {
-  padding: 4px 12px;
-  font-size: 12px;
+  padding: 6px 14px;
+  font-size: 13px;
+  min-height: 36px;
 }
 
-#koito-admin-content .kp-close {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--fg3);
-  line-height: 1;
+#koito-admin-content .kp-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+#koito-admin-content .kp-body-inner {
   padding: 0;
-  transition: color .1s ease;
-  font-family: 'Jost', sans-serif;
-}
-
-#koito-admin-content .kp-close:hover {
-  color: var(--fg);
+  min-height: 0;
 }
 
 #koito-admin-content .table-wrap {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  border: 1px solid var(--bg3);
-  border-radius: var(--radius);
 }
 
 #koito-admin-content table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
 }
 
 #koito-admin-content th,
 #koito-admin-content td {
-  padding: 8px 10px;
+  padding: 10px 12px;
   text-align: left;
   border-bottom: 1px solid var(--bg3);
   white-space: nowrap;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 #koito-admin-content th {
   background: var(--bg);
   font-weight: 600;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--fg2);
   text-transform: uppercase;
   letter-spacing: .06em;
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 #koito-admin-content tr:last-child td {
   border-bottom: none;
 }
 
-#koito-admin-content tr:hover td {
+#koito-admin-content tbody tr {
+  transition: background .08s ease;
+}
+
+#koito-admin-content tbody tr:hover td {
   background: rgba(229, 132, 106, .04);
 }
 
 #koito-admin-content .cell {
-  max-width: 160px;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   display: inline-block;
@@ -210,9 +271,9 @@ const adminPageHTML = `<!DOCTYPE html>
 
 #koito-admin-content .badge {
   display: inline-block;
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 20px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   border: 1px solid transparent;
 }
@@ -229,12 +290,6 @@ const adminPageHTML = `<!DOCTYPE html>
   border-color: rgba(212, 98, 96, .3);
 }
 
-#koito-admin-content .badge-valid {
-  background: rgba(122, 173, 212, .15);
-  color: var(--info);
-  border-color: rgba(122, 173, 212, .3);
-}
-
 #koito-admin-content .badge-invalid {
   background: rgba(232, 168, 64, .15);
   color: var(--warning);
@@ -242,36 +297,164 @@ const adminPageHTML = `<!DOCTYPE html>
 }
 
 #koito-admin-content .actions {
-  text-align: center;
   white-space: nowrap;
 }
 
+#koito-admin-content .actions .btn + .btn {
+  margin-left: 6px;
+}
+
 #koito-admin-content .empty {
-  padding: 40px 20px;
+  padding: 60px 20px;
   text-align: center;
   color: var(--fg3);
-  font-size: 14px;
+  font-size: 15px;
 }
 
 #koito-admin-content .mono {
   font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--fg2);
   text-align: center;
 }
 
+#koito-admin-content .kp-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-top: 1px solid var(--bg3);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+#koito-admin-content .kp-footer .kp-page-info {
+  font-size: 12px;
+  color: var(--fg3);
+  white-space: nowrap;
+}
+
+#koito-admin-content .kp-footer .kp-page-btn {
+  padding: 6px 12px;
+  min-height: 36px;
+  border: 1px solid var(--bg3);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--fg2);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: 'Jost', sans-serif;
+  transition: background .1s ease, color .1s ease;
+}
+
+#koito-admin-content .kp-footer .kp-page-btn:hover:not(:disabled) {
+  background: var(--bg3);
+  color: var(--fg);
+}
+
+#koito-admin-content .kp-footer .kp-page-btn:disabled {
+  opacity: .35;
+  cursor: default;
+}
+
+#koito-admin-content .kp-footer .kp-page-btn.active {
+  background: var(--primary);
+  color: var(--bg);
+  border-color: var(--primary);
+}
+
+#koito-admin-content .kp-footer select {
+  padding: 6px 8px;
+  min-height: 36px;
+  background: var(--bg);
+  border: 1px solid var(--bg3);
+  border-radius: var(--radius);
+  color: var(--fg2);
+  font-size: 12px;
+  font-family: 'Jost', sans-serif;
+  cursor: pointer;
+}
+
+#koito-admin-content .kp-footer select:focus {
+  outline: none;
+  border-color: var(--fg3);
+}
+
+#koito-admin-content .kp-cards {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#koito-admin-content .kp-card {
+  background: var(--bg);
+  border: 1px solid var(--bg3);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+
+#koito-admin-content .kp-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+#koito-admin-content .kp-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#koito-admin-content .kp-card-meta {
+  font-size: 12px;
+  color: var(--fg3);
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+#koito-admin-content .kp-card-meta span {
+  display: block;
+}
+
+#koito-admin-content .kp-card-meta .kp-label {
+  color: var(--fg3);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+#koito-admin-content .kp-card-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid var(--bg3);
+}
+
+#koito-admin-content .kp-card-actions .btn {
+  flex: 1;
+}
+
+/* ---- Modal overlay ---- */
 #koito-admin-content .kp-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, .9);
+  background: rgba(0, 0, 0, .85);
   z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: kpFadeIn .1s ease;
+  animation: kpFadeIn .12s ease;
 }
 
 @keyframes kpFadeIn {
@@ -284,23 +467,22 @@ const adminPageHTML = `<!DOCTYPE html>
   border: 1px solid var(--bg3);
   border-radius: var(--radius);
   padding: 24px;
-  width: 680px;
-  max-width: 95vw;
-  max-height: 85vh;
+  width: min(94vw, 620px);
+  max-height: min(90vh, 700px);
   overflow-y: auto;
-  animation: kpScaleIn .1s ease;
+  animation: kpScaleIn .12s ease;
 }
 
 @keyframes kpScaleIn {
-  from { opacity: 0; transform: scale(.95) }
+  from { opacity: 0; transform: scale(.96) }
   to   { opacity: 1; transform: scale(1) }
 }
 
 #koito-admin-content .kp-modal h2 {
   font-family: 'League Spartan', sans-serif;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
   color: var(--fg);
   letter-spacing: .02em;
 }
@@ -308,7 +490,7 @@ const adminPageHTML = `<!DOCTYPE html>
 #koito-admin-content .form-row {
   display: flex;
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   flex-wrap: wrap;
 }
 
@@ -319,21 +501,22 @@ const adminPageHTML = `<!DOCTYPE html>
 
 #koito-admin-content .form-group label {
   display: block;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--fg3);
-  margin-bottom: 3px;
+  margin-bottom: 4px;
   text-transform: uppercase;
   letter-spacing: .06em;
 }
 
 #koito-admin-content .form-group input {
   width: 100%;
-  padding: 8px 10px;
+  padding: 10px 12px;
+  min-height: 40px;
   background: var(--bg);
   border: 1px solid var(--bg3);
   border-radius: var(--radius);
-  font-size: 13px;
+  font-size: 14px;
   font-family: 'Jost', sans-serif;
   color: var(--fg);
   transition: border-color .1s ease;
@@ -351,18 +534,22 @@ const adminPageHTML = `<!DOCTYPE html>
 
 #koito-admin-content .form-actions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   justify-content: flex-end;
-  margin-top: 16px;
-  padding-top: 14px;
+  margin-top: 18px;
+  padding-top: 16px;
   border-top: 1px solid var(--bg3);
 }
 
+#koito-admin-content .form-actions .btn {
+  min-width: 90px;
+}
+
 #koito-admin-content .form-section {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--fg3);
-  margin: 14px 0 8px;
+  margin: 16px 0 10px;
   text-transform: uppercase;
   letter-spacing: .08em;
 }
@@ -370,8 +557,8 @@ const adminPageHTML = `<!DOCTYPE html>
 #koito-admin-content .toggle-switch {
   position: relative;
   display: inline-block;
-  width: 40px;
-  height: 22px;
+  width: 44px;
+  height: 24px;
   flex-shrink: 0;
 }
 
@@ -386,15 +573,15 @@ const adminPageHTML = `<!DOCTYPE html>
   cursor: pointer;
   top: 0; left: 0; right: 0; bottom: 0;
   background: var(--bg3);
-  border-radius: 22px;
+  border-radius: 24px;
   transition: background .15s ease;
 }
 
 #koito-admin-content .toggle-slider::before {
   content: '';
   position: absolute;
-  height: 18px;
-  width: 18px;
+  height: 20px;
+  width: 20px;
   left: 2px;
   bottom: 2px;
   background: var(--fg);
@@ -407,109 +594,23 @@ const adminPageHTML = `<!DOCTYPE html>
 }
 
 #koito-admin-content .toggle-switch input:checked + .toggle-slider::before {
-  transform: translateX(18px);
+  transform: translateX(20px);
 }
 
 #koito-admin-content .toggle-switch input:focus-visible + .toggle-slider {
-  outline: 1px solid var(--fg3);
+  outline: 2px solid var(--fg3);
   outline-offset: 2px;
 }
 
-#koito-admin-content .kp-search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-#koito-admin-content .kp-search input {
-  padding: 6px 10px;
-  background: var(--bg);
-  border: 1px solid var(--bg3);
-  border-radius: var(--radius);
-  font-size: 13px;
-  font-family: 'Jost', sans-serif;
-  color: var(--fg);
-  width: 200px;
-  transition: border-color .1s ease;
-}
-
-#koito-admin-content .kp-search input:focus {
-  border-color: var(--fg3);
-  outline: none;
-}
-
-#koito-admin-content .kp-search input::placeholder {
-  color: var(--fg3);
-  opacity: .5;
-}
-
-#koito-admin-content .kp-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 12px 0 4px;
-  font-size: 12px;
-  color: var(--fg2);
-}
-
-#koito-admin-content .kp-pagination .kp-page-btn {
-  padding: 4px 10px;
-  border: 1px solid var(--bg3);
-  border-radius: var(--radius);
-  background: var(--bg);
-  color: var(--fg2);
-  cursor: pointer;
-  font-size: 12px;
-  font-family: 'Jost', sans-serif;
-  transition: background .1s ease, color .1s ease;
-}
-
-#koito-admin-content .kp-pagination .kp-page-btn:hover:not(:disabled) {
-  background: var(--bg3);
-  color: var(--fg);
-}
-
-#koito-admin-content .kp-pagination .kp-page-btn:disabled {
-  opacity: .3;
-  cursor: default;
-}
-
-#koito-admin-content .kp-pagination .kp-page-btn.active {
-  background: var(--primary);
-  color: var(--bg);
-  border-color: var(--primary);
-}
-
-#koito-admin-content .kp-pagination .kp-page-info {
-  margin: 0 8px;
-  color: var(--fg3);
-}
-
-#koito-admin-content .kp-pagination select {
-  padding: 4px 6px;
-  background: var(--bg);
-  border: 1px solid var(--bg3);
-  border-radius: var(--radius);
-  color: var(--fg2);
-  font-size: 12px;
-  font-family: 'Jost', sans-serif;
-  cursor: pointer;
-}
-
-#koito-admin-content .kp-pagination select:focus {
-  outline: none;
-  border-color: var(--fg3);
-}
-
+/* ---- Toast ---- */
 #koito-admin-content .kp-toast {
   position: fixed;
   bottom: 24px;
   right: 24px;
-  padding: 10px 20px;
+  padding: 12px 22px;
   border-radius: var(--radius);
   color: var(--bg);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   z-index: 20000;
   animation: kpToastIn .15s ease;
@@ -517,7 +618,7 @@ const adminPageHTML = `<!DOCTYPE html>
 }
 
 @keyframes kpToastIn {
-  from { opacity: 0; transform: translateY(8px) }
+  from { opacity: 0; transform: translateY(10px) }
   to   { opacity: 1; transform: translateY(0) }
 }
 
@@ -525,104 +626,210 @@ const adminPageHTML = `<!DOCTYPE html>
 #koito-admin-content .kp-toast-error   { background: var(--error) }
 #koito-admin-content .kp-toast-info    { background: var(--info) }
 
-@media (max-width: 900px) {
-  #koito-admin-content { padding: 12px; }
-  #koito-admin-content .toolbar { flex-direction: column; gap: 10px; align-items: stretch; }
-  #koito-admin-content .kp-search { flex-wrap: wrap; }
-  #koito-admin-content .kp-search input { width: 100%; }
-  #koito-admin-content .kp-search .rule-count { width: 100%; }
-  #koito-admin-content .btn { padding: 12px 20px; font-size: 15px; justify-content: center; min-height: 44px; }
-  #koito-admin-content .btn-sm { padding: 10px 16px; min-height: 40px; }
-  #koito-admin-content h1 { font-size: 17px; }
-  #koito-admin-content td, #koito-admin-content th { padding: 6px 5px; font-size: 11px; }
-  #koito-admin-content .cell { max-width: 80px; }
-  #koito-admin-content .form-row { flex-direction: column; gap: 8px; }
-  #koito-admin-content .form-group { min-width: 0; }
-  #koito-admin-content .kp-modal { width: 100vw; max-width: 100vw; max-height: 100vh; border-radius: 0; padding: 16px; }
-  #koito-admin-content .kp-pagination { flex-wrap: wrap; justify-content: center; }
-  #koito-admin-content .kp-pagination .kp-page-btn { padding: 6px 12px; min-height: 36px; }
-  #koito-admin-content .kp-pagination select { min-height: 36px; }
-  #koito-admin-content .mono { font-size: 11px; }
-  #koito-admin-content .badge { font-size: 10px; padding: 2px 6px; }
-  #koito-admin-content .actions {
-    position: sticky;
-    right: 0;
-    background: var(--bg2);
-    z-index: 2;
+/* Mobile <= 768px */
+@media (max-width: 768px) {
+  #koito-admin-content {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    border: none;
   }
-  #koito-admin-content tr:hover td.actions {
-    background: rgba(229, 132, 106, .04);
+
+  #koito-admin-content .kp-header {
+    padding: 10px 14px;
+    gap: 8px;
   }
-  #koito-admin-content .table-wrap {
-    background:
-      linear-gradient(to right, transparent calc(100% - 20px), rgba(0,0,0,.15) 100%)
-      0 0 / 100% 100% no-repeat;
+
+  #koito-admin-content .kp-header h1 {
+    font-size: 16px;
+  }
+
+  #koito-admin-content .kp-header h1 small {
+    display: none;
+  }
+
+  #koito-admin-content .kp-close {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    font-size: 28px;
+  }
+
+  #koito-admin-content .kp-toolbar {
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    gap: 8px;
+  }
+
+  #koito-admin-content .kp-toolbar .rule-count {
+    font-size: 12px;
+    order: 1;
+  }
+
+  #koito-admin-content .kp-search {
+    max-width: none;
+    order: 2;
+  }
+
+  #koito-admin-content .kp-search input {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  #koito-admin-content .btn {
+    min-height: 44px;
+    padding: 10px 18px;
+    font-size: 14px;
+  }
+
+  #koito-admin-content .btn-sm {
+    min-height: 44px;
+    padding: 10px 18px;
+    font-size: 14px;
+  }
+
+  #koito-admin-content .kp-body {
+    flex: 1;
+    min-height: 0;
+  }
+
+  #koito-admin-content table {
+    display: none;
+  }
+
+  #koito-admin-content .kp-cards {
+    display: flex;
+  }
+
+  #koito-admin-content .kp-card-actions .btn {
+    min-height: 44px;
+  }
+
+  #koito-admin-content .kp-modal {
+    width: 100vw;
+    max-width: 100vw;
+    max-height: 100vh;
+    height: 100vh;
+    border-radius: 0;
+    padding: 16px;
+    border: none;
+  }
+
+  #koito-admin-content .kp-modal h2 {
+    font-size: 16px;
+    margin-bottom: 14px;
+  }
+
+  #koito-admin-content .form-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  #koito-admin-content .form-group {
+    min-width: 0;
+  }
+
+  #koito-admin-content .form-group input {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  #koito-admin-content .form-actions .btn {
+    flex: 1;
+    min-height: 44px;
+  }
+
+  #koito-admin-content .kp-footer {
+    padding: 8px 14px;
+    gap: 6px;
+  }
+
+  #koito-admin-content .kp-footer .kp-page-btn {
+    min-height: 40px;
+    padding: 8px 12px;
+  }
+
+  #koito-admin-content .kp-footer select {
+    min-height: 40px;
+  }
+
+  #koito-admin-content .mono {
+    font-size: 12px;
+  }
+
+  #koito-admin-content .badge {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+
+  #koito-admin-content .toast {
+    bottom: 16px;
+    right: 16px;
+    left: 16px;
+    text-align: center;
   }
 }
 
-@media (max-width: 480px) {
-  #koito-admin-content { padding: 8px; }
-  #koito-admin-content table { table-layout: fixed; }
-  #koito-admin-content thead tr:first-child th:nth-child(1) { width: 30% !important; }
-  #koito-admin-content thead tr:first-child th:nth-child(2) { width: 30% !important; }
-  #koito-admin-content thead tr:first-child th:nth-child(3) { width: 10% !important; }
-  #koito-admin-content thead tr:first-child th:nth-child(4) { width: 6% !important; }
-  #koito-admin-content thead tr:first-child th:nth-child(5) { width: 10% !important; }
-  #koito-admin-content thead tr:first-child th:nth-child(6) { width: 14% !important; }
-  #koito-admin-content td, #koito-admin-content th { padding: 3px 2px; font-size: 9px; }
-  #koito-admin-content .cell { display: block; width: 100%; overflow: hidden; text-overflow: ellipsis; max-width: none; }
-  #koito-admin-content .btn { padding: 8px 10px; font-size: 12px; min-height: 36px; }
-  #koito-admin-content .btn-sm { padding: 6px 8px; font-size: 10px; min-height: 32px; }
-  #koito-admin-content .actions .btn-sm { padding: 4px 6px; font-size: 9px; min-height: 28px; margin-right: 3px !important; }
-  #koito-admin-content .kp-search input { font-size: 14px; }
-  #koito-admin-content th { font-size: 8px; letter-spacing: .02em; }
-  #koito-admin-content .mono { font-size: 9px; }
-  #koito-admin-content .badge { font-size: 8px; padding: 1px 4px; }
-  #koito-admin-content .kp-pagination { font-size: 10px; }
-  #koito-admin-content .kp-pagination .kp-page-btn { padding: 4px 8px; min-height: 28px; font-size: 10px; }
-  #koito-admin-content .kp-pagination select { min-height: 28px; font-size: 10px; }
+/* Desktop > 768px */
+@media (min-width: 769px) {
+  #koito-admin-content .kp-cards {
+    display: none;
+  }
 }
+
 </style>
 
 <div id="koito-admin-content">
-  <button class="kp-close" id="kpCloseBtn">&times;</button>
-  <h1>Koito Proxy <small>Rule Admin</small></h1>
+  <div class="kp-header">
+    <h1>Koito Proxy</h1>
+    <button class="kp-close" id="kpCloseBtn">&times;</button>
+  </div>
 
-  <div class="toolbar">
+  <div class="kp-toolbar">
+    <span class="rule-count" id="kpRuleCount"></span>
     <div class="kp-search">
-      <span class="rule-count" id="kpRuleCount"></span>
       <input id="kpSearchInput" type="text" placeholder="Search rules..." oninput="kpOnSearch()">
     </div>
     <button class="btn btn-primary" onclick="kpOpenCreate()">+ New Rule</button>
   </div>
 
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th colspan="3" style="text-align:center;border-right:1px solid var(--bg3)">Match</th>
-          <th colspan="3" style="text-align:center;border-right:1px solid var(--bg3)">Replace</th>
-          <th style="text-align:center" rowspan="2">MBID</th>
-          <th style="text-align:center" rowspan="2">Pri</th>
-          <th style="text-align:center" rowspan="2">Status</th>
-          <th style="text-align:center" rowspan="2">Actions</th>
-        </tr>
-        <tr>
-          <th style="text-align:center">Track</th>
-          <th style="text-align:center">Artist</th>
-          <th style="text-align:center;border-right:1px solid var(--bg3)">Release</th>
-          <th style="text-align:center">Track</th>
-          <th style="text-align:center">Artist</th>
-          <th style="text-align:center;border-right:1px solid var(--bg3)">Release</th>
-        </tr>
-      </thead>
-      <tbody id="kpRulesBody"></tbody>
-    </table>
+  <div class="kp-body">
+    <div id="kpBodyInner" class="kp-body-inner">
+      <div class="table-wrap">
+        <table>
+          <colgroup>
+            <col style="width:12%"><col style="width:10%"><col style="width:10%">
+            <col style="width:12%"><col style="width:10%"><col style="width:10%">
+            <col style="width:12%"><col style="width:4%"><col style="width:6%">
+            <col style="width:14%">
+          </colgroup>
+          <thead>
+            <tr>
+              <th colspan="3" style="text-align:center;border-right:1px solid var(--bg3)">Match</th>
+              <th colspan="3" style="text-align:center;border-right:1px solid var(--bg3)">Replace</th>
+              <th style="text-align:center" rowspan="2">MBID</th>
+              <th style="text-align:center" rowspan="2">Pri</th>
+              <th style="text-align:center" rowspan="2">Status</th>
+              <th style="text-align:center" rowspan="2">Actions</th>
+            </tr>
+            <tr>
+              <th style="text-align:center">Track</th>
+              <th style="text-align:center">Artist</th>
+              <th style="text-align:center;border-right:1px solid var(--bg3)">Release</th>
+              <th style="text-align:center">Track</th>
+              <th style="text-align:center">Artist</th>
+              <th style="text-align:center;border-right:1px solid var(--bg3)">Release</th>
+            </tr>
+          </thead>
+          <tbody id="kpRulesBody"></tbody>
+        </table>
+      </div>
+      <div id="kpCardsContainer" class="kp-cards"></div>
+      <div id="kpEmpty" class="empty" style="display:none">No rules defined yet.</div>
+    </div>
   </div>
 
-  <div id="kpPagination" class="kp-pagination" style="display:none"></div>
-
-  <div id="kpEmpty" class="empty" style="display:none">No rules defined yet.</div>
+  <div id="kpFooter" class="kp-footer" style="display:none"></div>
 
   <div id="kpModal" class="kp-modal-overlay" style="display:none" onclick="if(event.target===this)kpCloseModal()">
   <div class="kp-modal">
@@ -682,7 +889,7 @@ const adminPageHTML = `<!DOCTYPE html>
         </div>
       </div>
       <div class="form-row" style="align-items:center">
-        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--fg2)">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;color:var(--fg2);min-height:44px">
           <span class="toggle-switch">
             <input name="enabled" type="checkbox" checked>
             <span class="toggle-slider"></span>
@@ -701,12 +908,12 @@ const adminPageHTML = `<!DOCTYPE html>
   </div>
 
   <div id="kpDeleteModal" class="kp-modal-overlay" style="display:none" onclick="if(event.target===this)kpCloseDeleteModal()">
-    <div class="kp-modal" style="max-width:400px">
+    <div class="kp-modal" style="max-width:420px">
       <h2>Delete Rule</h2>
-      <p style="margin-bottom:14px;color:var(--fg2);font-size:14px">
+      <p style="margin-bottom:16px;color:var(--fg2);font-size:14px;line-height:1.5">
         Are you sure you want to delete this rule? This cannot be undone.
       </p>
-      <p id="kpDeleteInfo" style="margin-bottom:16px;font-size:12px;color:var(--fg3)"></p>
+      <p id="kpDeleteInfo" style="margin-bottom:18px;font-size:13px;color:var(--fg3)"></p>
       <div class="form-actions" style="border-top:none;padding-top:0;margin-top:0">
         <button class="btn" onclick="kpCloseDeleteModal()">Cancel</button>
         <button class="btn btn-danger" onclick="kpConfirmDelete()">Delete</button>
@@ -722,8 +929,20 @@ var kpEditingId = null;
 var kpSearchQuery = '';
 var kpPage = 1;
 var kpPageSize = 10;
+var kpLastMobile = null;
+
 
 document.getElementById('kpCloseBtn').onclick = kpCloseAdmin;
+
+function kpIsMobile() {
+  return window.matchMedia('(max-width: 768px)').matches;
+}
+
+window.matchMedia('(max-width: 768px)').addEventListener('change', function (e) {
+  kpLastMobile = e.matches;
+  kpRender();
+});
+
 
 function kpToast(msg, type) {
   var el = document.getElementById('kpToastContainer');
@@ -745,9 +964,11 @@ function kpToast(msg, type) {
 
 function kpRender() {
   var tbody = document.getElementById('kpRulesBody');
+  var cards = document.getElementById('kpCardsContainer');
   var empty = document.getElementById('kpEmpty');
-  var pagination = document.getElementById('kpPagination');
+  var footer = document.getElementById('kpFooter');
   tbody.innerHTML = '';
+  cards.innerHTML = '';
 
   var query = kpSearchQuery.trim().toLowerCase();
   var filtered = query
@@ -771,7 +992,7 @@ function kpRender() {
 
   if (kpRules.length === 0) {
     empty.style.display = 'block';
-    pagination.style.display = 'none';
+    footer.style.display = 'none';
     document.getElementById('kpRuleCount').textContent = '';
     return;
   }
@@ -785,42 +1006,91 @@ function kpRender() {
     countEl.textContent = kpRules.length + ' rule' + (kpRules.length > 1 ? 's' : '');
   }
 
-  function cell(v, s) {
-    s = s || '';
-    return v
-      ? '<td' + s + '><span class="cell" title="' + kpEsc(v) + '">' + kpEsc(v) + '</span></td>'
-      : '<td' + s + '><span class="cell" style="color:var(--fg3)">-</span></td>';
-  }
+  if (kpIsMobile()) {
+    pageItems.forEach(function (r) {
+      var card = document.createElement('div');
+      card.className = 'kp-card';
 
-  pageItems.forEach(function (r) {
-    var tr = document.createElement('tr');
-    tr.innerHTML =
-      cell(r.match_track_name, ' style="text-align:center"') +
-      cell(r.match_artist_name, ' style="text-align:center"') +
-      cell(r.match_release_name, ' style="text-align:center"') +
-      cell(r.replace_track_name, ' style="text-align:center"') +
-      cell(r.replace_artist_name, ' style="text-align:center"') +
-      cell(r.replace_release_name, ' style="text-align:center"') +
-      cell(r.match_mbid, ' style="text-align:center"') +
-      '<td class="mono">' + r.priority + '</td>' +
-      '<td style="text-align:center">' +
-        (r.enabled
-          ? '<span class="badge badge-enabled">on</span>'
-          : '<span class="badge badge-disabled">off</span>') +
-        (r.valid ? '' : ' <span class="badge badge-invalid">low</span>') +
-      '</td>' +
-      '<td class="actions">' +
-        '<button class="btn btn-sm" style="margin-right:6px" onclick="kpEditRule(\'' + r.id + '\')">Edit</button>' +
-        '<button class="btn btn-sm btn-danger" onclick="kpOpenDelete(\'' + r.id + '\')">Del</button>' +
-      '</td>';
-    tbody.appendChild(tr);
-  });
+      var titleText = r.match_track_name || r.match_artist_name || r.replace_track_name || 'Untitled';
+      var title = document.createElement('div');
+      title.className = 'kp-card-title';
+      title.textContent = titleText;
+
+      var header = document.createElement('div');
+      header.className = 'kp-card-header';
+      header.appendChild(title);
+      var statusBadge = r.enabled
+        ? '<span class="badge badge-enabled">on</span>'
+        : '<span class="badge badge-disabled">off</span>';
+      if (!r.valid) statusBadge += ' <span class="badge badge-invalid">low</span>';
+      var statusEl = document.createElement('div');
+      statusEl.innerHTML = statusBadge;
+      header.appendChild(statusEl);
+      card.appendChild(header);
+
+      var meta = document.createElement('div');
+      meta.className = 'kp-card-meta';
+      var parts = [];
+      if (r.match_artist_name) parts.push('<span><span class="kp-label">Match Artist</span> ' + kpEsc(r.match_artist_name) + '</span>');
+      if (r.match_release_name) parts.push('<span><span class="kp-label">Match Release</span> ' + kpEsc(r.match_release_name) + '</span>');
+      if (r.replace_track_name) parts.push('<span><span class="kp-label">Replace Track</span> ' + kpEsc(r.replace_track_name) + '</span>');
+      if (r.replace_artist_name) parts.push('<span><span class="kp-label">Replace Artist</span> ' + kpEsc(r.replace_artist_name) + '</span>');
+      if (r.replace_release_name) parts.push('<span><span class="kp-label">Replace Release</span> ' + kpEsc(r.replace_release_name) + '</span>');
+      if (r.match_mbid) parts.push('<span><span class="kp-label">MBID</span> ' + kpEsc(r.match_mbid) + '</span>');
+      parts.push('<span><span class="kp-label">Pri</span> ' + r.priority + '</span>');
+      meta.innerHTML = parts.join('');
+      card.appendChild(meta);
+
+      var acts = document.createElement('div');
+      acts.className = 'kp-card-actions';
+      acts.innerHTML =
+        '<button class="btn btn-sm" onclick="kpEditRule(\'' + r.id + '\')">Edit</button>' +
+        '<button class="btn btn-sm btn-danger" onclick="kpOpenDelete(\'' + r.id + '\')">Delete</button>';
+      card.appendChild(acts);
+
+      cards.appendChild(card);
+    });
+  } else {
+    try {
+      pageItems.forEach(function (r) {
+        var tr = document.createElement('tr');
+        tr.innerHTML = kpCell(r.match_track_name, ' style="text-align:center"') +
+          kpCell(r.match_artist_name, ' style="text-align:center"') +
+          kpCell(r.match_release_name, ' style="text-align:center"') +
+          kpCell(r.replace_track_name, ' style="text-align:center"') +
+          kpCell(r.replace_artist_name, ' style="text-align:center"') +
+          kpCell(r.replace_release_name, ' style="text-align:center"') +
+          kpCell(r.match_mbid, ' style="text-align:center"') +
+          '<td class="mono">' + r.priority + '</td>' +
+          '<td style="text-align:center">' +
+            (r.enabled
+              ? '<span class="badge badge-enabled">on</span>'
+              : '<span class="badge badge-disabled">off</span>') +
+            (r.valid ? '' : ' <span class="badge badge-invalid">low</span>') +
+          '</td>' +
+          '<td class="actions">' +
+            '<button class="btn btn-sm" onclick="kpEditRule(\'' + r.id + '\')">Edit</button>' +
+            '<button class="btn btn-sm btn-danger" onclick="kpOpenDelete(\'' + r.id + '\')">Del</button>' +
+          '</td>';
+        tbody.appendChild(tr);
+      });
+    } catch (e) {
+      kpToast('Render error: ' + e.message, 'error');
+    }
+  }
 
   kpRenderPagination(filtered.length, totalPages);
 }
 
+function kpCell(v, s) {
+  s = s || '';
+  return v
+    ? '<td' + s + '><span class="cell" title="' + kpEsc(v) + '">' + kpEsc(v) + '</span></td>'
+    : '<td' + s + '><span class="cell" style="color:var(--fg3)">-</span></td>';
+}
+
 function kpRenderPagination(total, totalPages) {
-  var el = document.getElementById('kpPagination');
+  var el = document.getElementById('kpFooter');
   if (totalPages <= 1 && !kpSearchQuery.trim()) {
     el.style.display = 'none';
     return;
@@ -830,15 +1100,17 @@ function kpRenderPagination(total, totalPages) {
   var html = '';
   html += '<span class="kp-page-info">' + ((kpPage - 1) * kpPageSize + 1) + '-' + Math.min(kpPage * kpPageSize, total) + ' of ' + total + '</span>';
 
-  html += '<select onchange="kpPageSize=parseInt(this.value);kpPage=1;kpRender()">';
-  [10, 15, 25, 50].forEach(function (n) {
-    html += '<option value="' + n + '"' + (n === kpPageSize ? ' selected' : '') + '>' + n + '</option>';
-  });
-  html += '</select>';
+  if (!kpIsMobile()) {
+    html += '<select onchange="kpPageSize=parseInt(this.value);kpPage=1;kpRender()">';
+    [10, 15, 25, 50].forEach(function (n) {
+      html += '<option value="' + n + '"' + (n === kpPageSize ? ' selected' : '') + '>' + n + '</option>';
+    });
+    html += '</select>';
+  }
 
   html += '<button class="kp-page-btn" onclick="kpGoToPage(kpPage-1)"' + (kpPage <= 1 ? ' disabled' : '') + '>&laquo; Prev</button>';
 
-  var maxVisible = 5;
+  var maxVisible = kpIsMobile() ? 2 : 5;
   var pageStart = Math.max(1, kpPage - Math.floor(maxVisible / 2));
   var pageEnd = Math.min(totalPages, pageStart + maxVisible - 1);
   if (pageEnd - pageStart + 1 < maxVisible) {
