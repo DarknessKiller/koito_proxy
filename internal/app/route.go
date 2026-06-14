@@ -12,6 +12,7 @@ import (
 	"koito_proxy/internal/proxy"
 	"koito_proxy/internal/proxy/koito"
 	"koito_proxy/internal/proxy/listenbrainz"
+	"koito_proxy/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -33,8 +34,11 @@ func (a *App) SetupRoute() {
 	lbAuth := auth.NewListenBrainzAuth(a.config, cache, a.httpClient)
 	koitoAuth := auth.NewKoitoAuth(a.config, cache, a.httpClient)
 
+	ruleService := service.NewRuleService(a.repository, a.ruleEngine)
+	koitoService := service.NewKoitoService(ruleService, a.config)
+
 	lbHandler := listenbrainz.NewHandler(a.ruleEngine, a.config)
-	koitoHandler := koito.NewHandler(a.ruleEngine, a.repository, a.config)
+	koitoHandler := koito.NewHandler(koitoService, a.config)
 
 	fallbackProxy := proxy.New(a.config).Handler()
 
@@ -66,8 +70,7 @@ func (a *App) SetupRoute() {
 
 	admin.RegisterRoutes(
 		r.Group("/apis/admin"),
-		a.repository,
-		a.ruleEngine,
+		ruleService,
 		koitoAuth.Middleware(),
 	)
 

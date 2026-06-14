@@ -18,6 +18,7 @@ import (
 	"koito_proxy/internal/admin"
 	"koito_proxy/internal/model"
 	"koito_proxy/internal/rules"
+	"koito_proxy/internal/service"
 )
 
 // MockRuleRepository
@@ -76,7 +77,8 @@ var _ = Describe("Admin Handler", func() {
 		gin.SetMode(gin.TestMode)
 		mockRepo = &MockRuleRepository{}
 		engine = rules.NewRuleEngine()
-		h = admin.NewHandler(mockRepo, engine)
+		svc := service.NewRuleService(mockRepo, engine)
+		h = admin.NewHandler(svc)
 	})
 
 	run := func(method, path string, body any, params ...gin.Param) *httptest.ResponseRecorder {

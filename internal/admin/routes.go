@@ -1,17 +1,15 @@
 package admin
 
 import (
-	"koito_proxy/internal/model"
-	"koito_proxy/internal/repository"
-	"koito_proxy/internal/rules"
+	"koito_proxy/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(group *gin.RouterGroup, repo repository.Repository[model.Rule], engine *rules.RuleEngine, auth gin.HandlerFunc) {
+func RegisterRoutes(group *gin.RouterGroup, ruleSvc service.RuleService, auth gin.HandlerFunc) {
 	group.Use(auth)
 
-	h := NewHandler(repo, engine)
+	h := NewHandler(ruleSvc)
 
 	group.GET("/check", h.CheckAuth)
 	group.GET("/rules", h.ListRules)

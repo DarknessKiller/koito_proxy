@@ -18,6 +18,7 @@ import (
 	"koito_proxy/internal/model"
 	"koito_proxy/internal/proxy/koito"
 	"koito_proxy/internal/rules"
+	"koito_proxy/internal/service"
 )
 
 // MockRuleRepository
@@ -91,7 +92,11 @@ var _ = Describe("Intercept.Merge", func() {
 		}))
 
 		cfg = &config.Config{UpstreamURL: upstream.URL}
-		h = koito.NewHandler(engine, mockRepo, cfg)
+		
+		ruleSvc := service.NewRuleService(mockRepo, engine)
+		koitoSvc := service.NewKoitoService(ruleSvc, cfg)
+
+		h = koito.NewHandler(koitoSvc, cfg)
 	})
 
 	AfterEach(func() {

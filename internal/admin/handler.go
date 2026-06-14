@@ -3,24 +3,22 @@ package admin
 import (
 	"database/sql"
 	"koito_proxy/internal/model"
-	"koito_proxy/internal/repository"
 	"koito_proxy/internal/response"
 	"koito_proxy/internal/rules"
+	"koito_proxy/internal/service"
 	"log/slog"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/segmentio/ksuid"
 )
 
 type Handler struct {
-	repo   repository.Repository[model.Rule]
-	engine *rules.RuleEngine
+	ruleService service.RuleService
 }
 
-func NewHandler(repo repository.Repository[model.Rule], engine *rules.RuleEngine) *Handler {
-	return &Handler{repo: repo, engine: engine}
+func NewHandler(ruleSvc service.RuleService) *Handler {
+	return &Handler{ruleService: ruleSvc}
 }
 
 type RuleRequest struct {
@@ -61,15 +59,15 @@ func (h *Handler) CheckAuth(c *gin.Context) {
 }
 
 func (h *Handler) ListRules(c *gin.Context) {
-	rules, err := h.repo.GetAll(c.Request.Context())
+	rulesList, err := h.ruleService.GetAll(c.Request.Context())
 	if err != nil {
 		slog.Error("failed to list rules", "error", err)
 		response.RespondInternalError(c)
 		return
 	}
 
-	resp := make([]RuleResponse, 0, len(rules))
-	for _, r := range rules {
+	resp := make([]RuleResponse, 0, len(rulesList))
+	for _, r := range rulesList {
 		resp = append(resp, ruleToResponse(r))
 	}
 
@@ -78,7 +76,7 @@ func (h *Handler) ListRules(c *gin.Context) {
 
 func (h *Handler) GetRule(c *gin.Context) {
 	id := c.Param("id")
-	rule, err := h.repo.GetByID(c.Request.Context(), id)
+	rule, err := h.ruleService.GetByID(c.Request.Context(), id)
 	if err != nil {
 		slog.Error("failed to get rule", "id", id, "error", err)
 		c.JSON(http.StatusNotFound, gin.H{"error": "rule not found"})
@@ -98,13 +96,11 @@ func (h *Handler) CreateRule(c *gin.Context) {
 
 	rule := requestToRule(req)
 
-	if err := h.repo.Create(c.Request.Context(), rule); err != nil {
+	if err := h.ruleService.Create(c.Request.Context(), rule); err != nil {
 		slog.Error("failed to create rule", "error", err)
 		response.RespondInternalError(c)
 		return
 	}
-
-	h.engine.Add(*rule)
 
 	slog.Info("rule created", "id", rule.ID.String())
 	c.JSON(http.StatusCreated, ruleToResponse(*rule))
@@ -113,7 +109,7 @@ func (h *Handler) CreateRule(c *gin.Context) {
 func (h *Handler) UpdateRule(c *gin.Context) {
 	id := c.Param("id")
 
-	existing, err := h.repo.GetByID(c.Request.Context(), id)
+	existing, err := h.ruleService.GetByID(c.Request.Context(), id)
 	if err != nil {
 		slog.Error("failed to get rule for update", "id", id, "error", err)
 		c.JSON(http.StatusNotFound, gin.H{"error": "rule not found"})
@@ -129,18 +125,11 @@ func (h *Handler) UpdateRule(c *gin.Context) {
 
 	updated := applyRequestToRule(existing, &req)
 
-	if err := h.repo.Update(c.Request.Context(), id, updated); err != nil {
+	if err := h.ruleService.Update(c.Request.Context(), id, updated); err != nil {
 		slog.Error("failed to update rule", "id", id, "error", err)
 		response.RespondInternalError(c)
 		return
 	}
-
-	parsedID, err := ksuid.Parse(id)
-	if err == nil {
-		slog.Error("failed to parse rule id", "id", id, "error", err)
-		h.engine.Remove(parsedID)
-	}
-	h.engine.Add(*updated)
 
 	slog.Info("rule updated", "id", id)
 	c.JSON(http.StatusOK, ruleToResponse(*updated))
@@ -149,20 +138,11 @@ func (h *Handler) UpdateRule(c *gin.Context) {
 func (h *Handler) DeleteRule(c *gin.Context) {
 	id := c.Param("id")
 
-	if err := h.repo.Delete(c.Request.Context(), id); err != nil {
+	if err := h.ruleService.Delete(c.Request.Context(), id); err != nil {
 		slog.Error("failed to delete rule", "id", id, "error", err)
 		c.JSON(http.StatusNotFound, gin.H{"error": "rule not found"})
 		return
 	}
-
-	parsedID, err := ksuid.Parse(id)
-	if err != nil {
-		slog.Error("failed to parse rule id", "id", id, "error", err)
-		response.RespondInternalError(c)
-		return
-	}
-
-	h.engine.Remove(parsedID)
 
 	slog.Info("rule deleted", "id", id)
 	c.Status(http.StatusNoContent)
