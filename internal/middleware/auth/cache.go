@@ -22,20 +22,26 @@ func NewCache() *Cache {
 
 func (c *Cache) Get(key string) (bool, bool) {
 	c.mu.RLock()
-	defer c.mu.RUnlock()
-
 	item, ok := c.items[key]
+	c.mu.RUnlock()
+
 	if !ok {
 		return false, false
 	}
 
-	if time.Now().After(item.ExpiresAt) {
-		c.mu.Lock()
-		delete(c.items, key)
-		return false, false
+	if !time.Now().After(item.ExpiresAt) {
+		return true, true
 	}
 
-	return true, true
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	item, ok = c.items[key]
+	if ok && time.Now().After(item.ExpiresAt) {
+		delete(c.items, key)
+	}
+
+	return false, false
 }
 
 func (c *Cache) Set(key string, ttl time.Duration) {

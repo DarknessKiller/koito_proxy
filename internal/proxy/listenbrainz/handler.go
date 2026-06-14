@@ -3,7 +3,6 @@ package listenbrainz
 import (
 	"bytes"
 	"encoding/json"
-	"io"
 	"koito_proxy/internal/config"
 	"koito_proxy/internal/model"
 	"koito_proxy/internal/response"
@@ -85,17 +84,10 @@ func (h *Handler) InterceptSubmitListen(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		slog.Error("failed to read listenbrainz proxy response body", "error", err, "status", resp.StatusCode)
-		response.RespondInternalError(c)
-		return
-	}
-
 	slog.Info("koito submit listen intercepted",
 		"original_body", string(originalBody),
 		"modified_body", string(modifiedBytes),
 	)
 
-	c.Data(resp.StatusCode, resp.Header.Get("Content-Type"), respBody)
+	c.DataFromReader(resp.StatusCode, resp.ContentLength, resp.Header.Get("Content-Type"), resp.Body, nil)
 }
