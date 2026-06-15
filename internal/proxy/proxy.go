@@ -123,7 +123,7 @@ const overlayScript = `<style>
         var o = document.getElementById('kp-admin-overlay');
         if (o) {
           o.style.display = 'flex';
-          document.getElementById('koito-admin-content').style.display = 'block';
+          document.getElementById('koito-admin-content').style.display = '';
           return;
         }
 
