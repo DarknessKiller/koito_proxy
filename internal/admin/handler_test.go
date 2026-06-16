@@ -68,16 +68,16 @@ func (m *MockRuleRepository) Delete(ctx context.Context, id string) error {
 var _ = Describe("Admin Handler", func() {
 
 	var (
-		mockRepo    *MockRuleRepository
+		mockRuleRepository    *MockRuleRepository
 		ruleService *service.RuleService
 		h           *admin.Handler
 	)
 
 	BeforeEach(func() {
 		gin.SetMode(gin.TestMode)
-		mockRepo = &MockRuleRepository{}
+		mockRuleRepository = &MockRuleRepository{}
 		engine := rules.NewRuleEngine()
-		ruleService = service.NewRuleService(mockRepo, engine)
+		ruleService = service.NewRuleService(mockRuleRepository, engine)
 		h = admin.NewHandler(ruleService)
 	})
 
@@ -134,7 +134,7 @@ var _ = Describe("Admin Handler", func() {
 
 	Describe("ListRules", func() {
 		It("returns all rules", func() {
-			mockRepo.GetAllFunc = func(ctx context.Context) ([]model.Rule, error) {
+			mockRuleRepository.GetAllFunc = func(ctx context.Context) ([]model.Rule, error) {
 				return []model.Rule{
 					{
 						MatchTrackName: sql.NullString{String: "Track A", Valid: true},
@@ -159,7 +159,7 @@ var _ = Describe("Admin Handler", func() {
 		})
 
 		It("returns 500 when repository fails", func() {
-			mockRepo.GetAllFunc = func(ctx context.Context) ([]model.Rule, error) {
+			mockRuleRepository.GetAllFunc = func(ctx context.Context) ([]model.Rule, error) {
 				return nil, errors.New("db error")
 			}
 
@@ -172,7 +172,7 @@ var _ = Describe("Admin Handler", func() {
 	Describe("CreateRule", func() {
 		It("creates a rule and returns 201", func() {
 			var createdID string
-			mockRepo.CreateFunc = func(ctx context.Context, rule *model.Rule) error {
+			mockRuleRepository.CreateFunc = func(ctx context.Context, rule *model.Rule) error {
 				createdID = rule.ID.String()
 				Expect(*rule.Enabled).To(BeTrue())
 				return nil
@@ -193,7 +193,7 @@ var _ = Describe("Admin Handler", func() {
 		})
 
 		It("creates a disabled rule when enabled=false", func() {
-			mockRepo.CreateFunc = func(ctx context.Context, rule *model.Rule) error {
+			mockRuleRepository.CreateFunc = func(ctx context.Context, rule *model.Rule) error {
 				Expect(*rule.Enabled).To(BeFalse())
 				return nil
 			}
@@ -223,7 +223,7 @@ var _ = Describe("Admin Handler", func() {
 	Describe("GetRule", func() {
 		It("returns a rule by ID", func() {
 			id := ksuid.New().String()
-			mockRepo.GetByIDFunc = func(ctx context.Context, rid string) (*model.Rule, error) {
+			mockRuleRepository.GetByIDFunc = func(ctx context.Context, rid string) (*model.Rule, error) {
 				Expect(rid).To(Equal(id))
 				return &model.Rule{
 					MatchTrackName: sql.NullString{String: "Track", Valid: true},
@@ -238,7 +238,7 @@ var _ = Describe("Admin Handler", func() {
 		})
 
 		It("returns 404 when rule not found", func() {
-			mockRepo.GetByIDFunc = func(ctx context.Context, id string) (*model.Rule, error) {
+			mockRuleRepository.GetByIDFunc = func(ctx context.Context, id string) (*model.Rule, error) {
 				return nil, errors.New("not found")
 			}
 
@@ -252,10 +252,10 @@ var _ = Describe("Admin Handler", func() {
 	Describe("UpdateRule", func() {
 		It("updates a rule and returns 200", func() {
 			id := ksuid.New().String()
-			mockRepo.GetByIDFunc = func(ctx context.Context, rid string) (*model.Rule, error) {
+			mockRuleRepository.GetByIDFunc = func(ctx context.Context, rid string) (*model.Rule, error) {
 				return &model.Rule{Enabled: boolPtr(true)}, nil
 			}
-			mockRepo.UpdateFunc = func(ctx context.Context, uid string, rule *model.Rule) error {
+			mockRuleRepository.UpdateFunc = func(ctx context.Context, uid string, rule *model.Rule) error {
 				Expect(uid).To(Equal(id))
 				Expect(*rule.Enabled).To(BeFalse())
 				return nil
@@ -271,7 +271,7 @@ var _ = Describe("Admin Handler", func() {
 		})
 
 		It("returns 404 when rule not found", func() {
-			mockRepo.GetByIDFunc = func(ctx context.Context, id string) (*model.Rule, error) {
+			mockRuleRepository.GetByIDFunc = func(ctx context.Context, id string) (*model.Rule, error) {
 				return nil, errors.New("not found")
 			}
 
@@ -283,7 +283,7 @@ var _ = Describe("Admin Handler", func() {
 		})
 
 		It("returns 400 for invalid JSON", func() {
-			mockRepo.GetByIDFunc = func(ctx context.Context, id string) (*model.Rule, error) {
+			mockRuleRepository.GetByIDFunc = func(ctx context.Context, id string) (*model.Rule, error) {
 				return &model.Rule{}, nil
 			}
 
@@ -301,7 +301,7 @@ var _ = Describe("Admin Handler", func() {
 	Describe("DeleteRule", func() {
 		It("deletes a rule and returns 204", func() {
 			id := ksuid.New().String()
-			mockRepo.DeleteFunc = func(ctx context.Context, did string) error {
+			mockRuleRepository.DeleteFunc = func(ctx context.Context, did string) error {
 				Expect(did).To(Equal(id))
 				return nil
 			}
@@ -313,7 +313,7 @@ var _ = Describe("Admin Handler", func() {
 		})
 
 		It("returns 404 when rule not found", func() {
-			mockRepo.DeleteFunc = func(ctx context.Context, id string) error {
+			mockRuleRepository.DeleteFunc = func(ctx context.Context, id string) error {
 				return errors.New("not found")
 			}
 

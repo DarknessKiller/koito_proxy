@@ -73,7 +73,7 @@ var _ = Describe("Intercept.Merge", func() {
 
 		upstream      *httptest.Server
 		cfg           *config.Config
-		mockRepo      *MockRuleRepository
+		mockRuleRepository      *MockRuleRepository
 		koitoService  *service.KoitoService
 		h             *koito.Handler
 	)
@@ -83,9 +83,9 @@ var _ = Describe("Intercept.Merge", func() {
 
 		httpClient := &http.Client{Timeout: 10 * time.Second}
 
-		mockRepo = &MockRuleRepository{}
+		mockRuleRepository = &MockRuleRepository{}
 		engine := rules.NewRuleEngine()
-		ruleService := service.NewRuleService(mockRepo, engine)
+		ruleService := service.NewRuleService(mockRuleRepository, engine)
 
 		upstreamHandler = func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
@@ -141,7 +141,7 @@ var _ = Describe("Intercept.Merge", func() {
 
 	It("handles track merge", func() {
 
-		mockRepo.CreateFunc = func(ctx context.Context, rule *model.Rule) error {
+		mockRuleRepository.CreateFunc = func(ctx context.Context, rule *model.Rule) error {
 			Expect(rule.MatchTrackName.String).To(Equal("Old Track"))
 			Expect(rule.ReplaceTrackName.String).To(Equal("New Track"))
 			return nil
@@ -174,7 +174,7 @@ var _ = Describe("Intercept.Merge", func() {
 
 	It("handles artist merge", func() {
 
-		mockRepo.CreateFunc = func(ctx context.Context, rule *model.Rule) error {
+		mockRuleRepository.CreateFunc = func(ctx context.Context, rule *model.Rule) error {
 			Expect(rule.MatchArtistName.String).To(Equal("Old Artist Name"))
 			Expect(rule.ReplaceArtistName.String).To(Equal("New Artist Name"))
 			return nil
@@ -207,7 +207,7 @@ var _ = Describe("Intercept.Merge", func() {
 
 	It("handles album merge", func() {
 
-		mockRepo.CreateFunc = func(ctx context.Context, rule *model.Rule) error {
+		mockRuleRepository.CreateFunc = func(ctx context.Context, rule *model.Rule) error {
 			Expect(rule.MatchReleaseName.String).To(Equal("Old Album"))
 			Expect(rule.ReplaceReleaseName.String).To(Equal("New Album"))
 			return nil
@@ -245,7 +245,7 @@ var _ = Describe("Intercept.Merge", func() {
 
 	It("returns bad request for invalid JSON", func() {
 
-		mockRepo.CreateFunc = func(ctx context.Context, rule *model.Rule) error {
+		mockRuleRepository.CreateFunc = func(ctx context.Context, rule *model.Rule) error {
 			Fail("Create should not be called")
 			return nil
 		}
