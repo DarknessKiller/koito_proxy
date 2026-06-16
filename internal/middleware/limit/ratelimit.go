@@ -28,7 +28,7 @@ func RateLimiterMiddleware(requestsPerSec rate.Limit, burst int) gin.HandlerFunc
 	}()
 
 	return func(c *gin.Context) {
-		ip := c.ClientIP()
+		ip := c.RemoteIP()
 		if _, exists := clients[ip]; !exists {
 			clients[ip] = &client{
 				limiter: rate.NewLimiter(requestsPerSec, burst),

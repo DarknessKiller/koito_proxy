@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -91,7 +92,7 @@ var _ = Describe("Intercept.Merge", func() {
 		}))
 
 		cfg = &config.Config{UpstreamURL: upstream.URL}
-		h = koito.NewHandler(engine, mockRepo, cfg)
+		h = koito.NewHandler(engine, mockRepo, cfg, &http.Client{Timeout: 10 * time.Second})
 	})
 
 	AfterEach(func() {

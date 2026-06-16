@@ -21,16 +21,18 @@ import (
 )
 
 type Handler struct {
-	engine *rules.RuleEngine
-	rule   repository.Repository[model.Rule]
-	config *config.Config
+	engine     *rules.RuleEngine
+	rule       repository.Repository[model.Rule]
+	config     *config.Config
+	httpClient *http.Client
 }
 
-func NewHandler(e *rules.RuleEngine, rule repository.Repository[model.Rule], cfg *config.Config) *Handler {
+func NewHandler(e *rules.RuleEngine, rule repository.Repository[model.Rule], cfg *config.Config, httpClient *http.Client) *Handler {
 	return &Handler{
-		engine: e,
-		rule:   rule,
-		config: cfg,
+		engine:     e,
+		rule:       rule,
+		config:     cfg,
+		httpClient: httpClient,
 	}
 }
 
@@ -134,11 +136,22 @@ func (h *Handler) InterceptMerge(c *gin.Context) {
 	}
 
 	session, err := c.Cookie("koito_session")
-	if err == nil {
-		proxyReq.AddCookie(&http.Cookie{
-			Name:  "koito_session",
-			Value: session,
-		})
+	if err == nil && session != "" {
+		hasNonPrintable := false
+		for _, r := range session {
+			if r < 32 || r > 126 {
+				hasNonPrintable = true
+				break
+			}
+		}
+		if hasNonPrintable {
+			slog.Warn("koito_session cookie contains non-printable characters, rejecting", "path", c.Request.URL.Path)
+		} else {
+			proxyReq.AddCookie(&http.Cookie{
+				Name:  "koito_session",
+				Value: session,
+			})
+		}
 	}
 
 	if h.engine != nil {
@@ -147,7 +160,7 @@ func (h *Handler) InterceptMerge(c *gin.Context) {
 		}
 	}
 
-	resp, err := http.DefaultClient.Do(proxyReq)
+	resp, err := h.httpClient.Do(proxyReq)
 	if err != nil {
 		slog.Error("failed to execute upstream proxy request", "error", err, "entity", entity, "target_id", targetID, "method", c.Request.Method)
 		response.RespondBadGateway(c)
@@ -319,7 +332,7 @@ func (h *Handler) fetchUpstreamAPI(ctx context.Context, method string, api APIPa
 	}
 	proxyReq.Header.Set("Accept", "application/json")
 
-	resp, err := http.DefaultClient.Do(proxyReq)
+	resp, err := h.httpClient.Do(proxyReq)
 	if err != nil {
 		return nil, err
 	}

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -59,7 +60,7 @@ var _ = Describe("Intercept.SubmitListen", func() {
 		}
 		engine := rules.NewRuleEngine()
 		engine.UpdateRules([]model.Rule{rule})
-		h := listenbrainz.NewHandler(engine, cfg)
+		h := listenbrainz.NewHandler(engine, cfg, &http.Client{Timeout: 10 * time.Second})
 
 		reqBody, err := json.Marshal(model.ListenBrainzSubmitRequest{
 			ListenType: "single",
@@ -93,7 +94,7 @@ var _ = Describe("Intercept.SubmitListen", func() {
 		defer upstream.Close()
 
 		cfg := &config.Config{UpstreamURL: upstream.URL}
-		h := listenbrainz.NewHandler(nil, cfg)
+		h := listenbrainz.NewHandler(nil, cfg, &http.Client{Timeout: 10 * time.Second})
 
 		req := httptest.NewRequest(http.MethodPost, "/apis/listenbrainz/1/submit-listens", bytes.NewReader([]byte("not json")))
 		req.Header.Set("Content-Type", "application/json")
