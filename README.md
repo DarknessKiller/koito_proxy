@@ -206,7 +206,7 @@ The database location can be customized using the `PROXY_DB` environment variabl
 
 * [x] Rewrite rule engine
 * [x] Replace database layer with GORM
-* [ ] Implement Rules CRUD API
+* [x] Implement Rules CRUD API
 
 ---
 

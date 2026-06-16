@@ -3,6 +3,7 @@ package auth
 import (
 	"koito_proxy/internal/config"
 	"koito_proxy/internal/response"
+	"koito_proxy/internal/routeutil"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -49,7 +50,7 @@ func (a *ListenBrainzAuth) Middleware() gin.HandlerFunc {
 }
 
 func (a *ListenBrainzAuth) validateUpstream(c *gin.Context, token string) bool {
-	pathBuilder := newPathBuilder()
+	pathBuilder := newAPIPathBuilder()
 	targetURL, err := a.targetURL(pathBuilder.LBAuthorization())
 	if err != nil {
 		slog.Error("failed to build listenbrainz auth URL", "error", err)
@@ -79,6 +80,6 @@ func (a *ListenBrainzAuth) validateUpstream(c *gin.Context, token string) bool {
 	return false
 }
 
-func (a *ListenBrainzAuth) targetURL(apiPath APIPath) (*url.URL, error) {
+func (a *ListenBrainzAuth) targetURL(apiPath routeutil.APIPath) (*url.URL, error) {
 	return apiPath.URL(a.config.UpstreamURL)
 }

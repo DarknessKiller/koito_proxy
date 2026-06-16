@@ -18,6 +18,7 @@ import (
 	"koito_proxy/internal/admin"
 	"koito_proxy/internal/model"
 	"koito_proxy/internal/rules"
+	"koito_proxy/internal/service"
 )
 
 // MockRuleRepository
@@ -67,16 +68,17 @@ func (m *MockRuleRepository) Delete(ctx context.Context, id string) error {
 var _ = Describe("Admin Handler", func() {
 
 	var (
-		mockRepo *MockRuleRepository
-		engine   *rules.RuleEngine
-		h        *admin.Handler
+		mockRepo    *MockRuleRepository
+		ruleService *service.RuleService
+		h           *admin.Handler
 	)
 
 	BeforeEach(func() {
 		gin.SetMode(gin.TestMode)
 		mockRepo = &MockRuleRepository{}
-		engine = rules.NewRuleEngine()
-		h = admin.NewHandler(mockRepo, engine)
+		engine := rules.NewRuleEngine()
+		ruleService = service.NewRuleService(mockRepo, engine)
+		h = admin.NewHandler(ruleService)
 	})
 
 	run := func(method, path string, body any, params ...gin.Param) *httptest.ResponseRecorder {

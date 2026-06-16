@@ -1,4 +1,4 @@
-package koito_test
+package service_test
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestKoito(t *testing.T) {
+func TestService(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Koito Suite")
+	RunSpecs(t, "Service Suite")
 }

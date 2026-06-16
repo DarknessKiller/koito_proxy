@@ -1,21 +1,12 @@
-package listenbrainz
+package routeutil
 
 import (
 	"fmt"
 	"net/url"
+	"strings"
 )
 
 type APIPath string
-
-type pathBuilder struct{}
-
-func newPathBuilder() pathBuilder {
-	return pathBuilder{}
-}
-
-func (p pathBuilder) SubmitListen() APIPath {
-	return APIPath("/apis/listenbrainz/1/submit-listens")
-}
 
 func (p APIPath) String() string {
 	return string(p)
@@ -36,5 +27,22 @@ func (p APIPath) URL(baseURL string) (*url.URL, error) {
 		return nil, err
 	}
 
+	return base.ResolveReference(rel), nil
+}
+
+func (p APIPath) URLWithParams(baseURL string, params map[string]string) (*url.URL, error) {
+	s := p.String()
+	for k, v := range params {
+		s = strings.ReplaceAll(s, ":"+k, v)
+	}
+
+	base, err := url.Parse(baseURL)
+	if err != nil {
+		return nil, err
+	}
+	rel, err := url.Parse(s)
+	if err != nil {
+		return nil, err
+	}
 	return base.ResolveReference(rel), nil
 }

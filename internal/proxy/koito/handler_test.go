@@ -19,6 +19,7 @@ import (
 	"koito_proxy/internal/model"
 	"koito_proxy/internal/proxy/koito"
 	"koito_proxy/internal/rules"
+	"koito_proxy/internal/service"
 )
 
 // MockRuleRepository
@@ -70,18 +71,21 @@ var _ = Describe("Intercept.Merge", func() {
 	var (
 		upstreamHandler func(w http.ResponseWriter, r *http.Request)
 
-		upstream *httptest.Server
-		cfg      *config.Config
-		mockRepo *MockRuleRepository
-		engine   *rules.RuleEngine
-		h        *koito.Handler
+		upstream      *httptest.Server
+		cfg           *config.Config
+		mockRepo      *MockRuleRepository
+		koitoService  *service.KoitoService
+		h             *koito.Handler
 	)
 
 	BeforeEach(func() {
 		gin.SetMode(gin.TestMode)
 
+		httpClient := &http.Client{Timeout: 10 * time.Second}
+
 		mockRepo = &MockRuleRepository{}
-		engine = rules.NewRuleEngine()
+		engine := rules.NewRuleEngine()
+		ruleService := service.NewRuleService(mockRepo, engine)
 
 		upstreamHandler = func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
@@ -92,7 +96,8 @@ var _ = Describe("Intercept.Merge", func() {
 		}))
 
 		cfg = &config.Config{UpstreamURL: upstream.URL}
-		h = koito.NewHandler(engine, mockRepo, cfg, &http.Client{Timeout: 10 * time.Second})
+		koitoService = service.NewKoitoService(ruleService, cfg, httpClient)
+		h = koito.NewHandler(koitoService, cfg, httpClient)
 	})
 
 	AfterEach(func() {
