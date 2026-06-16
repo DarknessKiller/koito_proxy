@@ -4,6 +4,7 @@ import (
 	"context"
 	"koito_proxy/internal/config"
 	"koito_proxy/internal/response"
+	"koito_proxy/internal/routeutil"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -50,7 +51,7 @@ func (a *KoitoAuth) Middleware() gin.HandlerFunc {
 }
 
 func (a *KoitoAuth) validateUpstream(ctx context.Context, token string) bool {
-	pathBuilder := newPathBuilder()
+	pathBuilder := newAPIPathBuilder()
 	targetURL, err := a.targetURL(pathBuilder.KoitoAuthorization())
 	if err != nil {
 		slog.Error("failed to build koito auth URL", "error", err)
@@ -83,6 +84,6 @@ func (a *KoitoAuth) validateUpstream(ctx context.Context, token string) bool {
 	return false
 }
 
-func (a *KoitoAuth) targetURL(apiPath APIPath) (*url.URL, error) {
+func (a *KoitoAuth) targetURL(apiPath routeutil.APIPath) (*url.URL, error) {
 	return apiPath.URL(a.config.UpstreamURL)
 }

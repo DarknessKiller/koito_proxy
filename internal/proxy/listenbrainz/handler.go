@@ -57,7 +57,7 @@ func (h *Handler) InterceptSubmitListen(c *gin.Context) {
 		return
 	}
 
-	targetURL, err := newPathBuilder().SubmitListen().URL(h.config.UpstreamURL)
+	targetURL, err := newAPIPathBuilder().SubmitListen().URL(h.config.UpstreamURL)
 	if err != nil {
 		slog.Error("failed to build listenbrainz target URL", "error", err)
 		response.RespondInternalError(c)

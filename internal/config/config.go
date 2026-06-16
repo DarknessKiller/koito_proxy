@@ -22,7 +22,7 @@ func Load() (*Config, error) {
 func checkEnv(key string, defaultValue string) string {
 	val := os.Getenv(key)
 	if val == "" {
-		slog.Info("enviroment variable '" + key + "' is not set, using default value")
+		slog.Info("environment variable '" + key + "' is not set, using default value")
 		return defaultValue
 	}
 	return val

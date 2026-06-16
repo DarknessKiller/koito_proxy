@@ -10,16 +10,19 @@ import (
 	"koito_proxy/internal/model"
 	"koito_proxy/internal/repository"
 	"koito_proxy/internal/rules"
+	"koito_proxy/internal/service"
 
 	"gorm.io/gorm"
 )
 
 type Bootstrap struct {
-	Config     *config.Config
-	DB         *gorm.DB
-	Repository *repository.BaseRepository[model.Rule]
-	RuleEngine *rules.RuleEngine
-	HttpClient *http.Client
+	Config         *config.Config
+	DB             *gorm.DB
+	RuleRepository *repository.BaseRepository[model.Rule]
+	RuleEngine     *rules.RuleEngine
+	RuleService    *service.RuleService
+	KoitoService   *service.KoitoService
+	HttpClient     *http.Client
 }
 
 func New() (*Bootstrap, error) {
@@ -34,7 +37,7 @@ func New() (*Bootstrap, error) {
 		return nil, err
 	}
 
-	repository := repository.NewBaseRepository(sqlDB)
+	ruleRepository := repository.NewBaseRepository(sqlDB)
 
 	engine := rules.NewRuleEngine()
 
@@ -47,11 +50,16 @@ func New() (*Bootstrap, error) {
 		},
 	}
 
+	ruleService := service.NewRuleService(ruleRepository, engine)
+	koitoService := service.NewKoitoService(ruleService, cfg, httpclient)
+
 	return &Bootstrap{
-		Config:     cfg,
-		DB:         sqlDB,
-		Repository: repository,
-		RuleEngine: engine,
-		HttpClient: httpclient,
+		Config:         cfg,
+		DB:             sqlDB,
+		RuleRepository: ruleRepository,
+		RuleEngine:     engine,
+		RuleService:    ruleService,
+		KoitoService:   koitoService,
+		HttpClient:     httpclient,
 	}, nil
 }

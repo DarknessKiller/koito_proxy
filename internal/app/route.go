@@ -36,7 +36,7 @@ func (a *App) SetupRoute() {
 	koitoAuth := auth.NewKoitoAuth(a.config, cache, a.httpClient)
 
 	lbHandler := listenbrainz.NewHandler(a.ruleEngine, a.config, a.httpClient)
-	koitoHandler := koito.NewHandler(a.ruleEngine, a.repository, a.config, a.httpClient)
+	koitoHandler := koito.NewHandler(a.koitoService, a.config, a.httpClient)
 
 	fallbackProxy := proxy.New(a.config).Handler()
 
@@ -68,8 +68,7 @@ func (a *App) SetupRoute() {
 
 	admin.RegisterRoutes(
 		r.Group("/apis/admin"),
-		a.repository,
-		a.ruleEngine,
+		a.ruleService,
 		koitoAuth.Middleware(),
 		middleware.CSRFMiddleware(),
 	)

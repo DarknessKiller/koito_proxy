@@ -8,6 +8,7 @@ import (
 	"koito_proxy/internal/model"
 	"koito_proxy/internal/repository"
 	"koito_proxy/internal/rules"
+	"koito_proxy/internal/service"
 	"log/slog"
 	"net/http"
 	"os"
@@ -19,11 +20,13 @@ import (
 )
 
 type App struct {
-	engine     *gin.Engine
-	config     *config.Config
-	repository repository.Repository[model.Rule]
-	ruleEngine *rules.RuleEngine
-	httpClient *http.Client
+	engine       *gin.Engine
+	config       *config.Config
+	ruleRepository repository.Repository[model.Rule]
+	ruleService  *service.RuleService
+	koitoService *service.KoitoService
+	ruleEngine   *rules.RuleEngine
+	httpClient   *http.Client
 }
 
 func New() (*App, error) {
@@ -35,11 +38,13 @@ func New() (*App, error) {
 	gin.SetMode(gin.ReleaseMode)
 
 	app := &App{
-		config:     bs.Config,
-		repository: bs.Repository,
-		engine:     gin.New(),
-		ruleEngine: bs.RuleEngine,
-		httpClient: bs.HttpClient,
+		config:         bs.Config,
+		ruleRepository: bs.RuleRepository,
+		ruleService:    bs.RuleService,
+		koitoService:   bs.KoitoService,
+		engine:         gin.New(),
+		ruleEngine:     bs.RuleEngine,
+		httpClient:     bs.HttpClient,
 	}
 
 	app.SetupRoute()
@@ -59,7 +64,7 @@ func (a *App) Run() error {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
-	rules, err := a.repository.GetAll(context.Background())
+	rules, err := a.ruleRepository.GetAll(context.Background())
 	if err != nil {
 		slog.Error("failed to load rules from database", "error", err)
 		return err
