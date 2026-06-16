@@ -8,8 +8,8 @@ import (
 	"koito_proxy/internal/response"
 	"koito_proxy/internal/rules"
 	"log/slog"
-
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,12 +17,14 @@ import (
 type Handler struct {
 	ruleEngine *rules.RuleEngine
 	config     *config.Config
+	httpClient *http.Client
 }
 
-func NewHandler(ruleEngine *rules.RuleEngine, cfg *config.Config) *Handler {
+func NewHandler(ruleEngine *rules.RuleEngine, cfg *config.Config, httpClient *http.Client) *Handler {
 	return &Handler{
 		ruleEngine: ruleEngine,
 		config:     cfg,
+		httpClient: httpClient,
 	}
 }
 
@@ -74,9 +76,15 @@ func (h *Handler) InterceptSubmitListen(c *gin.Context) {
 		return
 	}
 
-	proxyReq.Header.Set("Authorization", c.GetHeader("Authorization"))
+	authHeader := c.GetHeader("Authorization")
+	if authHeader != "" && !strings.HasPrefix(authHeader, "Bearer ") && !strings.HasPrefix(authHeader, "Token ") {
+		slog.Warn("unexpected authorization header format, forwarding as-is", "path", c.Request.URL.Path)
+		response.RespondUnauthorized(c, response.ErrMissingAuthHeader)
+		return
+	}
+	proxyReq.Header.Set("Authorization", authHeader)
 
-	resp, err := http.DefaultClient.Do(proxyReq)
+	resp, err := h.httpClient.Do(proxyReq)
 	if err != nil {
 		slog.Error("failed to execute listenbrainz upstream proxy request", "error", err, "method", c.Request.Method)
 		response.RespondBadGateway(c)
@@ -84,7 +92,7 @@ func (h *Handler) InterceptSubmitListen(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 
-	slog.Info("koito submit listen intercepted",
+	slog.Debug("koito submit listen intercepted",
 		"original_body", string(originalBody),
 		"modified_body", string(modifiedBytes),
 	)

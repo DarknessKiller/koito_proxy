@@ -1258,9 +1258,9 @@ function kpSaveRule(e) {
     method = 'PUT';
   }
 
-  fetch(url, {
+	fetch(url, {
     method: method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'KOITO_PROXY_API' },
     body: JSON.stringify(raw),
   })
     .then(function (r) {
@@ -1295,7 +1295,7 @@ function kpCloseDeleteModal() {
 function kpConfirmDelete() {
   if (!kpDeleteId) return;
 
-  fetch('/apis/admin/rules/' + kpDeleteId, { method: 'DELETE' })
+	fetch('/apis/admin/rules/' + kpDeleteId, { method: 'DELETE', headers: { 'X-Requested-With': 'KOITO_PROXY_API' } })
     .then(function (r) {
       if (r.status === 401) throw new Error('unauthorized');
       if (!r.ok && r.status !== 204) throw new Error('HTTP ' + r.status);

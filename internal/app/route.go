@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"time"
@@ -29,12 +30,13 @@ func (a *App) SetupRoute() {
 	)
 
 	cache := auth.NewCache()
+	cache.StartCleanup(context.Background(), 5*time.Minute)
 
 	lbAuth := auth.NewListenBrainzAuth(a.config, cache, a.httpClient)
 	koitoAuth := auth.NewKoitoAuth(a.config, cache, a.httpClient)
 
-	lbHandler := listenbrainz.NewHandler(a.ruleEngine, a.config)
-	koitoHandler := koito.NewHandler(a.ruleEngine, a.repository, a.config)
+	lbHandler := listenbrainz.NewHandler(a.ruleEngine, a.config, a.httpClient)
+	koitoHandler := koito.NewHandler(a.ruleEngine, a.repository, a.config, a.httpClient)
 
 	fallbackProxy := proxy.New(a.config).Handler()
 
@@ -69,6 +71,7 @@ func (a *App) SetupRoute() {
 		a.repository,
 		a.ruleEngine,
 		koitoAuth.Middleware(),
+		middleware.CSRFMiddleware(),
 	)
 
 	r.NoRoute(func(c *gin.Context) {

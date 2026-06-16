@@ -136,8 +136,9 @@ func (h *Handler) UpdateRule(c *gin.Context) {
 	}
 
 	parsedID, err := ksuid.Parse(id)
-	if err == nil {
+	if err != nil {
 		slog.Error("failed to parse rule id", "id", id, "error", err)
+	} else {
 		h.engine.Remove(parsedID)
 	}
 	h.engine.Add(*updated)

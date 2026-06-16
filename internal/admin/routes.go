@@ -8,8 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(group *gin.RouterGroup, repo repository.Repository[model.Rule], engine *rules.RuleEngine, auth gin.HandlerFunc) {
-	group.Use(auth)
+func RegisterRoutes(group *gin.RouterGroup, repo repository.Repository[model.Rule], engine *rules.RuleEngine, middleware ...gin.HandlerFunc) {
+	group.Use(middleware...)
 
 	h := NewHandler(repo, engine)
 
