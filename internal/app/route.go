@@ -23,7 +23,6 @@ func (a *App) SetupRoute(ctx context.Context) {
 
 	r.Use(
 		limit.BodyLimitMiddleware(5),
-		limit.RateLimiterMiddleware(50, 100),
 		middleware.RequestIDMiddleware(),
 		GinSlogLogger(),
 		gin.Recovery(),
