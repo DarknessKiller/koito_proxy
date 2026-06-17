@@ -5,12 +5,18 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"regexp"
 
 	"koito_proxy/internal/config"
 	"koito_proxy/internal/response"
 	"koito_proxy/internal/service"
 
 	"github.com/gin-gonic/gin"
+)
+
+var (
+	validEntity = regexp.MustCompile(`^[a-z]+$`)
+	validID     = regexp.MustCompile(`^\d+$`)
 )
 
 type Handler struct {
@@ -34,6 +40,12 @@ type mergeRequest struct {
 func (h *Handler) InterceptMerge(c *gin.Context) {
 	entity := c.Param("entity")
 	targetID := c.Param("id")
+
+	if !validEntity.MatchString(entity) || !validID.MatchString(targetID) {
+		slog.Warn("invalid merge request parameters", "entity", entity, "target_id", targetID, "path", c.Request.URL.Path)
+		response.RespondBadRequest(c, response.ErrInvalidRequest)
+		return
+	}
 
 	var req mergeRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -80,6 +92,8 @@ func (h *Handler) InterceptMerge(c *gin.Context) {
 
 	if err := h.koitoService.CreateMergeRule(c.Request.Context(), entity, targetID, req.MergeFromID); err != nil {
 		slog.Error("koito merge rule add failed", "entity", entity, "target_id", targetID, "merge_from_id", req.MergeFromID, "error", err)
+		response.RespondInternalError(c)
+		return
 	}
 
 	resp, err := h.httpClient.Do(proxyReq)

@@ -83,6 +83,20 @@ func TestAPIPathURLWithParams(t *testing.T) {
 			params:  nil,
 			want:    "http://localhost:4110/apis/test/endpoint",
 		},
+		{
+			name:    "URL-encodes parameter with slashes",
+			path:    APIPath("/apis/web/v1/:entity/:id/merge"),
+			baseURL: "http://localhost:4110",
+			params:  map[string]string{"entity": "track", "id": "../../admin/rules"},
+			want:    "http://localhost:4110/apis/web/v1/track/..%2F..%2Fadmin%2Frules/merge",
+		},
+		{
+			name:    "URL-encodes parameter with special characters",
+			path:    APIPath("/apis/web/v1/:entity/:id/merge"),
+			baseURL: "http://localhost:4110",
+			params:  map[string]string{"entity": "track", "id": "123?inject=true"},
+			want:    "http://localhost:4110/apis/web/v1/track/123%3Finject=true/merge",
+		},
 	}
 
 	for _, tt := range tests {

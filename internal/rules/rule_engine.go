@@ -286,9 +286,10 @@ func (e *RuleEngine) Apply(
 	recordingMBID, durationBucket := buildIdentity(metadata)
 
 	bestPriority := -1
-	var matchingRules []CompiledRule
+	var bestRule *CompiledRule
 
-	for _, rule := range state.rules {
+	for i := range state.rules {
+		rule := &state.rules[i]
 		if !rule.Matches(
 			metadata,
 			recordingMBID,
@@ -297,18 +298,14 @@ func (e *RuleEngine) Apply(
 			continue
 		}
 
-		if rule.Priority > bestPriority {
+		if rule.Priority > bestPriority || (rule.Priority == bestPriority && bestRule != nil && rule.ID.String() < bestRule.ID.String()) {
 			bestPriority = rule.Priority
-			matchingRules = matchingRules[:0]
-		}
-
-		if rule.Priority == bestPriority {
-			matchingRules = append(matchingRules, rule)
+			bestRule = rule
 		}
 	}
 
-	for _, rule := range matchingRules {
-		rule.Apply(metadata)
+	if bestRule != nil {
+		bestRule.Apply(metadata)
 	}
 }
 

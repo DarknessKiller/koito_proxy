@@ -27,6 +27,7 @@ type App struct {
 	koitoService *service.KoitoService
 	ruleEngine   *rules.RuleEngine
 	httpClient   *http.Client
+	cancelCleanup context.CancelFunc
 }
 
 func New() (*App, error) {
@@ -47,7 +48,9 @@ func New() (*App, error) {
 		httpClient:     bs.HttpClient,
 	}
 
-	app.SetupRoute()
+	ctx, cancel := context.WithCancel(context.Background())
+	app.cancelCleanup = cancel
+	app.SetupRoute(ctx)
 
 	return app, nil
 }
@@ -80,6 +83,8 @@ func (a *App) Run() error {
 
 	<-quit
 	slog.Warn("Received termination signal, initiating graceful shutdown...")
+
+	a.cancelCleanup()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()

@@ -34,6 +34,7 @@ func (a *KoitoAuth) Middleware() gin.HandlerFunc {
 		}
 
 		if ok, found := a.cache.Get(session); found && ok {
+			setCSRFCookie(c)
 			c.Next()
 			return
 		}
@@ -46,8 +47,14 @@ func (a *KoitoAuth) Middleware() gin.HandlerFunc {
 		}
 
 		a.cache.Set(session, 15*time.Minute)
+		setCSRFCookie(c)
 		c.Next()
 	}
+}
+
+func setCSRFCookie(c *gin.Context) {
+	c.SetSameSite(http.SameSiteStrictMode)
+	c.SetCookie("koito_csrf", "1", 0, "/", "", false, true)
 }
 
 func (a *KoitoAuth) validateUpstream(ctx context.Context, token string) bool {
