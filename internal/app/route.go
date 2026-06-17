@@ -121,6 +121,15 @@ func (a *App) SetupRoute(ctx context.Context) {
 	// Track-only artist management
 	r.POST("/apis/web/v1/track/:id/artists", fallbackProxy)
 	r.DELETE("/apis/web/v1/track/:id/artists/:artist_id", fallbackProxy)
+
+	// Frontend
+	r.NoRoute(func(c *gin.Context) {
+		if c.Request.Method != http.MethodGet {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Not found"})
+			return
+		}
+		fallbackProxy(c)
+	})
 }
 
 func GinSlogLogger() gin.HandlerFunc {
