@@ -208,17 +208,39 @@ func requestToRule(req RuleRequest) *model.Rule {
 }
 
 func applyRequestToRule(existing *model.Rule, req *RuleRequest) *model.Rule {
-	existing.MatchTrackName = nullStr(req.MatchTrackName)
-	existing.MatchArtistName = nullStr(req.MatchArtistName)
-	existing.MatchReleaseName = nullStr(req.MatchReleaseName)
-	existing.MatchArtistNames = req.MatchArtistNames
-	existing.MatchDurationBucket = int32Val(req.MatchDurationBucket)
-	existing.MatchMBID = nullStr(req.MatchMBID)
-	existing.ReplaceTrackName = nullStr(req.ReplaceTrackName)
-	existing.ReplaceArtistName = nullStr(req.ReplaceArtistName)
-	existing.ReplaceReleaseName = nullStr(req.ReplaceReleaseName)
-	existing.ReplaceArtistNames = req.ReplaceArtistNames
-	existing.Enabled = req.Enabled
+	if req.MatchTrackName != nil {
+		existing.MatchTrackName = nullStr(req.MatchTrackName)
+	}
+	if req.MatchArtistName != nil {
+		existing.MatchArtistName = nullStr(req.MatchArtistName)
+	}
+	if req.MatchReleaseName != nil {
+		existing.MatchReleaseName = nullStr(req.MatchReleaseName)
+	}
+	if req.MatchArtistNames != nil {
+		existing.MatchArtistNames = req.MatchArtistNames
+	}
+	if req.MatchDurationBucket != nil {
+		existing.MatchDurationBucket = int32Val(req.MatchDurationBucket)
+	}
+	if req.MatchMBID != nil {
+		existing.MatchMBID = nullStr(req.MatchMBID)
+	}
+	if req.ReplaceTrackName != nil {
+		existing.ReplaceTrackName = nullStr(req.ReplaceTrackName)
+	}
+	if req.ReplaceArtistName != nil {
+		existing.ReplaceArtistName = nullStr(req.ReplaceArtistName)
+	}
+	if req.ReplaceReleaseName != nil {
+		existing.ReplaceReleaseName = nullStr(req.ReplaceReleaseName)
+	}
+	if req.ReplaceArtistNames != nil {
+		existing.ReplaceArtistNames = req.ReplaceArtistNames
+	}
+	if req.Enabled != nil {
+		existing.Enabled = req.Enabled
+	}
 	return existing
 }
 

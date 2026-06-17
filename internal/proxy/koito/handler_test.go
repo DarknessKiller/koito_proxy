@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -71,11 +72,11 @@ var _ = Describe("Intercept.Merge", func() {
 	var (
 		upstreamHandler func(w http.ResponseWriter, r *http.Request)
 
-		upstream      *httptest.Server
-		cfg           *config.Config
-		mockRuleRepository      *MockRuleRepository
-		koitoService  *service.KoitoService
-		h             *koito.Handler
+		upstream           *httptest.Server
+		cfg                *config.Config
+		mockRuleRepository *MockRuleRepository
+		koitoService       *service.KoitoService
+		h                  *koito.Handler
 	)
 
 	BeforeEach(func() {
@@ -152,13 +153,17 @@ var _ = Describe("Intercept.Merge", func() {
 			func(w http.ResponseWriter, r *http.Request) {
 
 				if r.Method == http.MethodGet && r.URL.Path == "/apis/web/v1/track/123" {
-					w.Write([]byte(`{"id":123,"title":"Old Track","artists":[{"id":1,"name":"Old Artist"}],"album_id":1}`))
+					w.Write([]byte(`{"id":123,"title":"Old Track","artists":[{"id":1,"name":"Old Artist"}]}`))
 					return
 				}
 
 				if r.Method == http.MethodGet && r.URL.Path == "/apis/web/v1/track/456" {
-					w.Write([]byte(`{"id":456,"title":"New Track","artists":[{"id":2,"name":"New Artist"}],"album_id":2}`))
+					w.Write([]byte(`{"id":456,"title":"New Track","artists":[{"id":2,"name":"New Artist"}]}`))
 					return
+				}
+
+				if r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/apis/web/v1/album/") {
+					w.Write([]byte(`{"id":0,"title":"Album","artists":[{"id":0,"name":"Artist"}]}`))
 				}
 
 				if r.Method == http.MethodPost {
@@ -252,6 +257,70 @@ var _ = Describe("Intercept.Merge", func() {
 
 		rec := run("track", "456",
 			"not-json",
+			func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			},
+		)
+
+		Expect(rec.Code).To(Equal(http.StatusBadRequest))
+	})
+
+	It("returns bad request for invalid entity with path traversal", func() {
+		mockRuleRepository.CreateFunc = func(ctx context.Context, rule *model.Rule) error {
+			Fail("Create should not be called")
+			return nil
+		}
+
+		rec := run("../../admin", "456",
+			map[string]any{"merge_from_id": 123},
+			func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			},
+		)
+
+		Expect(rec.Code).To(Equal(http.StatusBadRequest))
+	})
+
+	It("returns bad request for invalid ID with path traversal", func() {
+		mockRuleRepository.CreateFunc = func(ctx context.Context, rule *model.Rule) error {
+			Fail("Create should not be called")
+			return nil
+		}
+
+		rec := run("track", "../../admin/rules",
+			map[string]any{"merge_from_id": 123},
+			func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			},
+		)
+
+		Expect(rec.Code).To(Equal(http.StatusBadRequest))
+	})
+
+	It("returns bad request for non-numeric ID", func() {
+		mockRuleRepository.CreateFunc = func(ctx context.Context, rule *model.Rule) error {
+			Fail("Create should not be called")
+			return nil
+		}
+
+		rec := run("track", "abc",
+			map[string]any{"merge_from_id": 123},
+			func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			},
+		)
+
+		Expect(rec.Code).To(Equal(http.StatusBadRequest))
+	})
+
+	It("returns bad request for empty entity", func() {
+		mockRuleRepository.CreateFunc = func(ctx context.Context, rule *model.Rule) error {
+			Fail("Create should not be called")
+			return nil
+		}
+
+		rec := run("", "123",
+			map[string]any{"merge_from_id": 1},
 			func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			},

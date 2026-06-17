@@ -934,6 +934,24 @@ var kpLastMobile = null;
 
 document.getElementById('kpCloseBtn').onclick = kpCloseAdmin;
 
+document.getElementById('kpCardsContainer').addEventListener('click', function(e) {
+  var btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  var id = btn.dataset.id;
+  var action = btn.dataset.action;
+  if (action === 'edit') kpEditRule(id);
+  if (action === 'delete') kpOpenDelete(id);
+});
+
+document.getElementById('kpRulesBody').addEventListener('click', function(e) {
+  var btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  var id = btn.dataset.id;
+  var action = btn.dataset.action;
+  if (action === 'edit') kpEditRule(id);
+  if (action === 'delete') kpOpenDelete(id);
+});
+
 function kpIsMobile() {
   return window.matchMedia('(max-width: 768px)').matches;
 }
@@ -1044,8 +1062,8 @@ function kpRender() {
       var acts = document.createElement('div');
       acts.className = 'kp-card-actions';
       acts.innerHTML =
-        '<button class="btn btn-sm" onclick="kpEditRule(\'' + r.id + '\')">Edit</button>' +
-        '<button class="btn btn-sm btn-danger" onclick="kpOpenDelete(\'' + r.id + '\')">Delete</button>';
+        '<button class="btn btn-sm" data-action="edit" data-id="' + kpEscJS(r.id) + '">Edit</button>' +
+        '<button class="btn btn-sm btn-danger" data-action="delete" data-id="' + kpEscJS(r.id) + '">Delete</button>';
       card.appendChild(acts);
 
       cards.appendChild(card);
@@ -1069,8 +1087,8 @@ function kpRender() {
             (r.valid ? '' : ' <span class="badge badge-invalid">low</span>') +
           '</td>' +
           '<td class="actions">' +
-            '<button class="btn btn-sm" onclick="kpEditRule(\'' + r.id + '\')">Edit</button>' +
-            '<button class="btn btn-sm btn-danger" onclick="kpOpenDelete(\'' + r.id + '\')">Del</button>' +
+            '<button class="btn btn-sm" data-action="edit" data-id="' + kpEscJS(r.id) + '">Edit</button>' +
+            '<button class="btn btn-sm btn-danger" data-action="delete" data-id="' + kpEscJS(r.id) + '">Del</button>' +
           '</td>';
         tbody.appendChild(tr);
       });
@@ -1149,6 +1167,10 @@ function kpEsc(s) {
   var d = document.createElement('div');
   d.appendChild(document.createTextNode(s));
   return d.innerHTML;
+}
+
+function kpEscJS(s) {
+  return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/</g, '\\x3c').replace(/>/g, '\\x3e');
 }
 
 function kpLoadRules() {
@@ -1260,7 +1282,7 @@ function kpSaveRule(e) {
 
 	fetch(url, {
     method: method,
-    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'KOITO_PROXY_API' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(raw),
   })
     .then(function (r) {
@@ -1295,7 +1317,7 @@ function kpCloseDeleteModal() {
 function kpConfirmDelete() {
   if (!kpDeleteId) return;
 
-	fetch('/apis/admin/rules/' + kpDeleteId, { method: 'DELETE', headers: { 'X-Requested-With': 'KOITO_PROXY_API' } })
+	fetch('/apis/admin/rules/' + kpDeleteId, { method: 'DELETE' })
     .then(function (r) {
       if (r.status === 401) throw new Error('unauthorized');
       if (!r.ok && r.status !== 204) throw new Error('HTTP ' + r.status);

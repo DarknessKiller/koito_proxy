@@ -38,8 +38,10 @@ func (s *KoitoService) CreateMergeRule(ctx context.Context, entity, targetID str
 		return s.createTrackMergeRule(ctx, sourceID, targetID)
 	case "artist":
 		return s.createArtistMergeRule(ctx, sourceID, targetID)
+	case "album":
+		return s.createAlbumMergeRule(ctx, sourceID, targetID)
 	default:
-		return nil
+		return fmt.Errorf("unsupported entity type: %s", entity)
 	}
 }
 
@@ -106,6 +108,25 @@ func (s *KoitoService) createArtistMergeRule(ctx context.Context, sourceID int64
 	rule := model.Rule{
 		MatchArtistName:   newNullString(source.Name),
 		ReplaceArtistName: newNullString(target.Name),
+		Enabled:           new(true),
+	}
+
+	return s.ruleService.Create(ctx, &rule)
+}
+
+func (s *KoitoService) createAlbumMergeRule(ctx context.Context, sourceID int64, targetID string) error {
+	source, err := s.fetchAlbum(ctx, sourceID)
+	if err != nil {
+		return fmt.Errorf("fetch source album: %w", err)
+	}
+	target, err := s.fetchAlbumString(ctx, targetID)
+	if err != nil {
+		return fmt.Errorf("fetch target album: %w", err)
+	}
+
+	rule := model.Rule{
+		MatchReleaseName:  newNullString(source.Title),
+		ReplaceReleaseName: newNullString(target.Title),
 		Enabled:           new(true),
 	}
 
@@ -209,7 +230,7 @@ func (s *KoitoService) fetchTrackString(ctx context.Context, id string) (*koitoT
 		return nil, err
 	}
 
-	if track.Title == "" || track.Artists[0].Name == "" {
+	if track.Title == "" || len(track.Artists) == 0 || track.Artists[0].Name == "" {
 		return nil, fmt.Errorf("unexpected track payload: missing track or artist name")
 	}
 

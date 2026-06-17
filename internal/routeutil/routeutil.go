@@ -33,7 +33,7 @@ func (p APIPath) URL(baseURL string) (*url.URL, error) {
 func (p APIPath) URLWithParams(baseURL string, params map[string]string) (*url.URL, error) {
 	s := p.String()
 	for k, v := range params {
-		s = strings.ReplaceAll(s, ":"+k, v)
+		s = strings.ReplaceAll(s, ":"+k, url.PathEscape(v))
 	}
 
 	base, err := url.Parse(baseURL)
