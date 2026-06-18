@@ -10,6 +10,7 @@ import (
 	"koito_proxy/internal/middleware"
 	"koito_proxy/internal/middleware/auth"
 	"koito_proxy/internal/middleware/limit"
+	"koito_proxy/internal/middleware/ratelimiter"
 	"koito_proxy/internal/proxy"
 	"koito_proxy/internal/proxy/koito"
 	"koito_proxy/internal/proxy/listenbrainz"
@@ -24,6 +25,7 @@ func (a *App) SetupRoute(ctx context.Context) {
 	r.Use(
 		limit.BodyLimitMiddleware(5),
 		middleware.RequestIDMiddleware(),
+		middleware.CSRFMiddleware(),
 		GinSlogLogger(),
 		gin.Recovery(),
 	)
@@ -62,6 +64,7 @@ func (a *App) SetupRoute(ctx context.Context) {
 	r.POST(
 		"/apis/web/v1/:entity/:id/merge",
 		koitoAuth.Middleware(),
+		ratelimiter.RateLimitMiddleware(a.config),
 		koitoHandler.InterceptMerge,
 	)
 
@@ -69,7 +72,7 @@ func (a *App) SetupRoute(ctx context.Context) {
 		r.Group("/apis/admin"),
 		a.ruleService,
 		koitoAuth.Middleware(),
-		middleware.CSRFMiddleware(),
+		ratelimiter.RateLimitMiddleware(a.config),
 	)
 
 	// Upstream Koito routes — only valid paths are registered.
