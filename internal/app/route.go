@@ -22,10 +22,10 @@ func (a *App) SetupRoute(ctx context.Context) {
 
 	r := a.engine
 
+	// Base Router
 	r.Use(
 		limit.BodyLimitMiddleware(5),
 		middleware.RequestIDMiddleware(),
-		middleware.CSRFMiddleware(),
 		GinSlogLogger(),
 		gin.Recovery(),
 	)
@@ -41,97 +41,105 @@ func (a *App) SetupRoute(ctx context.Context) {
 
 	fallbackProxy := proxy.New(a.config).Handler()
 
-	r.GET("/apis/health", func(c *gin.Context) {
+	rl := r.Group("", ratelimiter.RateLimitMiddleware(a.config))
 
-		ruleEngineStatus := "inactive"
-		if a.ruleEngine != nil {
-			ruleEngineStatus = "active"
-		}
+	// Koito Proxy Routes
+	{
 
-		c.JSON(http.StatusOK, gin.H{
-			"ok":                 true,
-			"rule_engine_status": ruleEngineStatus,
-			"timestamp":          time.Now().Format(time.RFC3339),
+		rl.GET("/apis/health", func(c *gin.Context) {
+			ruleEngineStatus := "inactive"
+			if a.ruleEngine != nil {
+				ruleEngineStatus = "active"
+			}
+
+			c.JSON(http.StatusOK, gin.H{
+				"ok":                 true,
+				"rule_engine_status": ruleEngineStatus,
+				"timestamp":          time.Now().Format(time.RFC3339),
+			})
 		})
-	})
 
-	r.POST(
-		"/apis/listenbrainz/1/submit-listens",
-		lbAuth.Middleware(),
-		lbHandler.InterceptSubmitListen,
-	)
+		rl.POST(
+			"/apis/listenbrainz/1/submit-listens",
+			lbAuth.Middleware(),
+			lbHandler.InterceptSubmitListen,
+		)
 
-	r.POST(
-		"/apis/web/v1/:entity/:id/merge",
-		koitoAuth.Middleware(),
-		ratelimiter.RateLimitMiddleware(a.config),
-		koitoHandler.InterceptMerge,
-	)
+		rl.POST(
+			"/apis/web/v1/:entity/:id/merge",
+			koitoAuth.Middleware(),
+			koitoHandler.InterceptMerge,
+		)
 
-	admin.RegisterRoutes(
-		r.Group("/apis/admin"),
-		a.ruleService,
-		koitoAuth.Middleware(),
-		ratelimiter.RateLimitMiddleware(a.config),
-	)
-
-	// Upstream Koito routes — only valid paths are registered.
-	r.GET("/apis/web/v1/config", fallbackProxy)
-	r.POST("/apis/web/v1/login", fallbackProxy)
-	r.POST("/apis/web/v1/logout", fallbackProxy)
-	r.GET("/apis/web/v1/top/tracks", fallbackProxy)
-	r.GET("/apis/web/v1/top/albums", fallbackProxy)
-	r.GET("/apis/web/v1/top/artists", fallbackProxy)
-	r.GET("/apis/web/v1/listens", fallbackProxy)
-	r.POST("/apis/web/v1/listens", fallbackProxy)
-	r.DELETE("/apis/web/v1/listens", fallbackProxy)
-	r.GET("/apis/web/v1/listen-activity", fallbackProxy)
-	r.GET("/apis/web/v1/first-activity", fallbackProxy)
-	r.GET("/apis/web/v1/now-playing", fallbackProxy)
-	r.GET("/apis/web/v1/stats", fallbackProxy)
-	r.GET("/apis/web/v1/search", fallbackProxy)
-	r.GET("/apis/web/v1/summary", fallbackProxy)
-	r.GET("/apis/web/v1/user", fallbackProxy)
-	r.PATCH("/apis/web/v1/user", fallbackProxy)
-	r.GET("/apis/web/v1/user/apikeys", fallbackProxy)
-	r.POST("/apis/web/v1/user/apikeys", fallbackProxy)
-	r.PATCH("/apis/web/v1/user/apikeys/:id", fallbackProxy)
-	r.DELETE("/apis/web/v1/user/apikeys/:id", fallbackProxy)
-	r.GET("/apis/web/v1/export", fallbackProxy)
-	r.DELETE("/apis/web/v1/data", fallbackProxy)
-	r.GET("/apis/listenbrainz/1/validate-token", fallbackProxy)
-	r.GET("/image/:image_id/:filename", fallbackProxy)
-
-	// Entity routes
-	for _, entity := range []string{"artist", "album", "track"} {
-		r.GET("/apis/web/v1/"+entity+"/:id", fallbackProxy)
-		r.DELETE("/apis/web/v1/"+entity+"/:id", fallbackProxy)
-		r.PATCH("/apis/web/v1/"+entity+"/:id", fallbackProxy)
-		r.GET("/apis/web/v1/"+entity+"/:id/aliases", fallbackProxy)
-		r.POST("/apis/web/v1/"+entity+"/:id/aliases", fallbackProxy)
-		r.DELETE("/apis/web/v1/"+entity+"/:id/aliases", fallbackProxy)
-		r.PATCH("/apis/web/v1/"+entity+"/:id/aliases/primary", fallbackProxy)
-		r.GET("/apis/web/v1/"+entity+"/:id/interest", fallbackProxy)
+		admin.RegisterRoutes(
+			rl.Group("/apis/admin"),
+			a.ruleService,
+			koitoAuth.Middleware(),
+		)
 	}
 
-	// Album & track artist subroutes
-	for _, entity := range []string{"album", "track"} {
-		r.GET("/apis/web/v1/"+entity+"/:id/artists", fallbackProxy)
-		r.PATCH("/apis/web/v1/"+entity+"/:id/artists/:artist_id", fallbackProxy)
-	}
+	// Koito Upstream Routes
+	{
 
-	// Track-only artist management
-	r.POST("/apis/web/v1/track/:id/artists", fallbackProxy)
-	r.DELETE("/apis/web/v1/track/:id/artists/:artist_id", fallbackProxy)
+		fb := r.Group("/apis/web/v1")
+		fb.GET("/config", fallbackProxy)
+		fb.POST("/login", fallbackProxy)
+		fb.POST("/logout", fallbackProxy)
+		fb.GET("/top/tracks", fallbackProxy)
+		fb.GET("/top/albums", fallbackProxy)
+		fb.GET("/top/artists", fallbackProxy)
+		fb.GET("/listens", fallbackProxy)
+		fb.POST("/listens", fallbackProxy)
+		fb.DELETE("/listens", fallbackProxy)
+		fb.GET("/listen-activity", fallbackProxy)
+		fb.GET("/first-activity", fallbackProxy)
+		fb.GET("/now-playing", fallbackProxy)
+		fb.GET("/stats", fallbackProxy)
+		fb.GET("/search", fallbackProxy)
+		fb.GET("/summary", fallbackProxy)
+		fb.GET("/user", fallbackProxy)
+		fb.PATCH("/user", fallbackProxy)
+		fb.GET("/user/apikeys", fallbackProxy)
+		fb.POST("/user/apikeys", fallbackProxy)
+		fb.PATCH("/user/apikeys/:id", fallbackProxy)
+		fb.DELETE("/user/apikeys/:id", fallbackProxy)
+		fb.GET("/export", fallbackProxy)
+		fb.DELETE("/data", fallbackProxy)
 
-	// Frontend
-	r.NoRoute(func(c *gin.Context) {
-		if c.Request.Method != http.MethodGet {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Not found"})
-			return
+		// Entity routes
+		for _, entity := range []string{"artist", "album", "track"} {
+			fb.GET("/"+entity+"/:id", fallbackProxy)
+			fb.DELETE("/"+entity+"/:id", fallbackProxy)
+			fb.PATCH("/"+entity+"/:id", fallbackProxy)
+			fb.GET("/"+entity+"/:id/aliases", fallbackProxy)
+			fb.POST("/"+entity+"/:id/aliases", fallbackProxy)
+			fb.DELETE("/"+entity+"/:id/aliases", fallbackProxy)
+			fb.PATCH("/"+entity+"/:id/aliases/primary", fallbackProxy)
+			fb.GET("/"+entity+"/:id/interest", fallbackProxy)
 		}
-		fallbackProxy(c)
-	})
+
+		// Album & track artist subroutes
+		for _, entity := range []string{"album", "track"} {
+			fb.GET("/"+entity+"/:id/artists", fallbackProxy)
+			fb.PATCH("/"+entity+"/:id/artists/:artist_id", fallbackProxy)
+		}
+
+		// Track-only artist management
+		fb.POST("/track/:id/artists", fallbackProxy)
+		fb.DELETE("/track/:id/artists/:artist_id", fallbackProxy)
+
+		// Non-web fallback routes
+		rl.GET("/apis/listenbrainz/1/validate-token", fallbackProxy)
+		r.GET("/image/:image_id/:filename", fallbackProxy)
+
+		r.NoRoute(func(c *gin.Context) {
+			if c.Request.Method != http.MethodGet {
+				c.JSON(http.StatusNotFound, gin.H{"error": "Not found"})
+				return
+			}
+			fallbackProxy(c)
+		})
+	}
 }
 
 func GinSlogLogger() gin.HandlerFunc {
