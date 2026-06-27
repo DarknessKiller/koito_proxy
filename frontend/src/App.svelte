@@ -106,11 +106,33 @@
     return payload
   }
 
+  function countFields(...fields: string[]): number {
+    return fields.filter(f => f.trim().length > 0).length
+  }
+
   async function handleSave(data: RuleFormData): Promise<void> {
-    const hasMatchField = data.match_track_name || data.match_artist_name || data.match_release_name || data.match_artist_names || data.match_duration_bucket || data.match_mbid
-    const hasReplaceField = data.replace_track_name || data.replace_artist_name || data.replace_release_name || data.replace_artist_names
-    if (!hasMatchField && !hasReplaceField) {
+    const matchCount = countFields(
+      data.match_track_name,
+      data.match_artist_name,
+      data.match_release_name,
+      data.match_artist_names,
+      data.match_duration_bucket,
+      data.match_mbid,
+    )
+    const replaceCount = countFields(
+      data.replace_track_name,
+      data.replace_artist_name,
+      data.replace_release_name,
+      data.replace_artist_names,
+    )
+
+    if (matchCount === 0 && replaceCount === 0) {
       toastManager.show('At least one match or replace field is required', 'error')
+      return
+    }
+
+    if (replaceCount > 0 && (data.match_track_name.trim() || data.match_release_name.trim()) && matchCount < 2) {
+      toastManager.show('At least two match criteria are required when using Track Name or Release Name match', 'error')
       return
     }
 
@@ -128,7 +150,12 @@
       await loadRules()
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to save rule'
-      toastManager.show(msg, 'error')
+      const friendly: Record<string, string> = {
+        'no_fields': 'At least one match or replace field is required',
+        'at_least_two_match_criteria': 'At least two match criteria are required when using Track Name or Release Name match',
+        'at_least_one_match_criteria': 'At least one match field is required when replacing',
+      }
+      toastManager.show(friendly[msg] || msg, 'error')
     }
   }
 

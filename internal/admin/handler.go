@@ -11,10 +11,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 )
-
-var validate = validator.New()
 
 type Handler struct {
 	ruleService *service.RuleService
@@ -25,16 +22,16 @@ func NewHandler(ruleService *service.RuleService) *Handler {
 }
 
 type RuleRequest struct {
-	MatchTrackName      *string  `json:"match_track_name,omitempty" validate:"required_without_all=MatchArtistName MatchReleaseName MatchArtistNames MatchDurationBucket MatchMBID ReplaceTrackName ReplaceArtistName ReplaceReleaseName ReplaceArtistNames"`
-	MatchArtistName     *string  `json:"match_artist_name,omitempty" validate:"required_with=MatchTrackName"`
+	MatchTrackName      *string  `json:"match_track_name,omitempty"`
+	MatchArtistName     *string  `json:"match_artist_name,omitempty"`
 	MatchReleaseName    *string  `json:"match_release_name,omitempty"`
 	MatchArtistNames    []string `json:"match_artist_names,omitempty"`
 	MatchDurationBucket *int32   `json:"match_duration_bucket,omitempty"`
 	MatchMBID           *string  `json:"match_mbid,omitempty"`
-	ReplaceTrackName    *string  `json:"replace_track_name,omitempty" validate:"required_with=MatchTrackName"`
-	ReplaceArtistName   *string  `json:"replace_artist_name,omitempty" validate:"required_with=MatchArtistName"`
-	ReplaceReleaseName  *string  `json:"replace_release_name,omitempty" validate:"required_with=MatchReleaseName"`
-	ReplaceArtistNames  []string `json:"replace_artist_names,omitempty" validate:"required_with=MatchArtistNames"`
+	ReplaceTrackName    *string  `json:"replace_track_name,omitempty"`
+	ReplaceArtistName   *string  `json:"replace_artist_name,omitempty"`
+	ReplaceReleaseName  *string  `json:"replace_release_name,omitempty"`
+	ReplaceArtistNames  []string `json:"replace_artist_names,omitempty"`
 	Enabled             *bool    `json:"enabled,omitempty"`
 }
 
@@ -97,9 +94,9 @@ func (h *Handler) CreateRule(c *gin.Context) {
 		return
 	}
 
-	if err := validate.Struct(req); err != nil {
-		slog.Error("rule validation failed", "error", err)
-		response.RespondBadRequest(c, response.ErrInvalidRequest)
+	if msg := validateMatchReplace(req); msg != "" {
+		slog.Error("rule validation failed", "error", msg)
+		response.RespondBadRequest(c, msg)
 		return
 	}
 
@@ -132,9 +129,9 @@ func (h *Handler) UpdateRule(c *gin.Context) {
 		return
 	}
 
-	if err := validate.Struct(req); err != nil {
-		slog.Error("rule validation failed", "error", err)
-		response.RespondBadRequest(c, response.ErrInvalidRequest)
+	if msg := validateMatchReplace(req); msg != "" {
+		slog.Error("rule validation failed", "error", msg)
+		response.RespondBadRequest(c, msg)
 		return
 	}
 
@@ -272,4 +269,58 @@ func int32Val(p *int32) int32 {
 		return 0
 	}
 	return *p
+}
+
+func validateMatchReplace(req RuleRequest) string {
+	matchCount := 0
+	if req.MatchTrackName != nil {
+		matchCount++
+	}
+	if req.MatchArtistName != nil {
+		matchCount++
+	}
+	if req.MatchReleaseName != nil {
+		matchCount++
+	}
+	if len(req.MatchArtistNames) > 0 {
+		matchCount++
+	}
+	if req.MatchDurationBucket != nil {
+		matchCount++
+	}
+	if req.MatchMBID != nil {
+		matchCount++
+	}
+
+	replaceCount := 0
+	if req.ReplaceTrackName != nil {
+		replaceCount++
+	}
+	if req.ReplaceArtistName != nil {
+		replaceCount++
+	}
+	if req.ReplaceReleaseName != nil {
+		replaceCount++
+	}
+	if len(req.ReplaceArtistNames) > 0 {
+		replaceCount++
+	}
+
+	if matchCount == 0 && replaceCount == 0 {
+		return response.ErrNoFields
+	}
+
+	if replaceCount == 0 {
+		return ""
+	}
+
+	if (req.MatchTrackName != nil || req.MatchReleaseName != nil) && matchCount < 2 {
+		return response.ErrAtLeastTwoMatchFields
+	}
+
+	if matchCount == 0 {
+		return response.ErrAtLeastOneMatchField
+	}
+
+	return ""
 }

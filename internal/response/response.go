@@ -17,7 +17,10 @@ const (
 	ErrMissingAuthHeader   = "missing_authorization_header"
 	ErrInvalidToken        = "invalid_token"
 
-	ErrInvalidRequest      = "invalid_request"
+	ErrInvalidRequest         = "invalid_request"
+	ErrNoFields               = "no_fields"
+	ErrAtLeastTwoMatchFields  = "at_least_two_match_criteria"
+	ErrAtLeastOneMatchField   = "at_least_one_match_criteria"
 	ErrInternalServer      = "internal_server_error"
 	ErrUpstreamUnavailable = "upstream_service_unavailable"
 )
