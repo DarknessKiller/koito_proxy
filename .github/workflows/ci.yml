@@ -2,30 +2,33 @@ name: Go Test
 
 on:
   push:
-    branches: [ master, development ]
+    branches: [master]
     paths:
-      - '**/*.go'
-      - 'go.mod'
-      - 'go.sum'
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
 
   pull_request:
-    branches: [ master, development ]
+    branches: [master]
     paths:
-      - '**/*.go'
-      - 'go.mod'
-      - 'go.sum'
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+
+permissions:
+  contents: read
 
 jobs:
   go-test:
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v6
-      with:
-        go-version: '1.26.x'
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache: true
 
-    - name: Run Go Test
-      run: go test -v ./...
-
+      - name: Test
+        run: go test ./...
