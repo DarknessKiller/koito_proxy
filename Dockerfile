@@ -24,5 +24,5 @@ VOLUME ["/app/data"]
 ENV PROXY_DB=/app/data/koito_proxy.db
 ENV PROXY_PORT=4112
 
-EXPOSE 4112
+EXPOSE ${PROXY_PORT}
 ENTRYPOINT ["./koito_proxy"]
