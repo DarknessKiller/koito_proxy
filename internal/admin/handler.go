@@ -94,6 +94,12 @@ func (h *Handler) CreateRule(c *gin.Context) {
 		return
 	}
 
+	if msg := validateMatchReplace(req); msg != "" {
+		slog.Error("rule validation failed", "error", msg)
+		response.RespondBadRequest(c, msg)
+		return
+	}
+
 	rule := requestToRule(req)
 
 	if err := h.ruleService.Create(c.Request.Context(), rule); err != nil {
@@ -120,6 +126,12 @@ func (h *Handler) UpdateRule(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		slog.Error("failed to bind update rule request", "error", err)
 		response.RespondBadRequest(c, response.ErrInvalidRequest)
+		return
+	}
+
+	if msg := validateMatchReplace(req); msg != "" {
+		slog.Error("rule validation failed", "error", msg)
+		response.RespondBadRequest(c, msg)
 		return
 	}
 
@@ -257,4 +269,58 @@ func int32Val(p *int32) int32 {
 		return 0
 	}
 	return *p
+}
+
+func validateMatchReplace(req RuleRequest) string {
+	matchCount := 0
+	if req.MatchTrackName != nil {
+		matchCount++
+	}
+	if req.MatchArtistName != nil {
+		matchCount++
+	}
+	if req.MatchReleaseName != nil {
+		matchCount++
+	}
+	if len(req.MatchArtistNames) > 0 {
+		matchCount++
+	}
+	if req.MatchDurationBucket != nil {
+		matchCount++
+	}
+	if req.MatchMBID != nil {
+		matchCount++
+	}
+
+	replaceCount := 0
+	if req.ReplaceTrackName != nil {
+		replaceCount++
+	}
+	if req.ReplaceArtistName != nil {
+		replaceCount++
+	}
+	if req.ReplaceReleaseName != nil {
+		replaceCount++
+	}
+	if len(req.ReplaceArtistNames) > 0 {
+		replaceCount++
+	}
+
+	if matchCount == 0 && replaceCount == 0 {
+		return response.ErrNoFields
+	}
+
+	if replaceCount == 0 {
+		return ""
+	}
+
+	if (req.MatchTrackName != nil || req.MatchReleaseName != nil) && matchCount < 2 {
+		return response.ErrAtLeastTwoMatchFields
+	}
+
+	if matchCount == 0 {
+		return response.ErrAtLeastOneMatchField
+	}
+
+	return ""
 }

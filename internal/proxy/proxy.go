@@ -120,46 +120,28 @@ const overlayScript = `<style>
       a.onclick = function (e) {
         e.preventDefault();
 
-        var o = document.getElementById('kp-admin-overlay');
-        if (o) {
-          o.style.display = 'flex';
-          document.getElementById('koito-admin-content').style.display = '';
+        var root = document.getElementById('koito-admin-root');
+        if (root) {
+          root.style.display = '';
           return;
         }
 
-        o = document.createElement('div');
-        o.id = 'kp-admin-overlay';
-        o.style.cssText = [
-          'position:fixed;top:0;left:0;right:0;bottom:0;',
-          'z-index:99999;background:rgba(0,0,0,.9);',
-          'display:flex;align-items:center;justify-content:center',
-        ].join('');
-        o.onclick = function (e) {
-          if (e.target === this) { kpCloseAdmin(); }
-        };
-        document.body.appendChild(o);
+        root = document.createElement('div');
+        root.id = 'koito-admin-root';
+        document.body.appendChild(root);
 
         fetch('/apis/admin/ui')
           .then(function (r) { return r.text() })
           .then(function (html) {
-            var d = document.createElement('div');
-            d.innerHTML = html;
-            o.appendChild(d);
-            d.querySelectorAll('script').forEach(function (s) {
+            root.innerHTML = html;
+            root.querySelectorAll('script').forEach(function (s) {
               var ns = document.createElement('script');
               ns.textContent = s.textContent;
-              s.parentNode.replaceChild(ns, s);
+          s.replaceWith(ns);
             });
           });
       };
     }, 100);
   });
-
-  function kpCloseAdmin() {
-    var o = document.getElementById('kp-admin-overlay');
-    if (o) o.style.display = 'none';
-    var c = document.getElementById('koito-admin-content');
-    if (c) c.style.display = 'none';
-  }
 })();
 </script>`
