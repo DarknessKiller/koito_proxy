@@ -180,9 +180,11 @@ var _ = Describe("Admin Handler", func() {
 
 			rec := call("POST", "/apis/admin/rules",
 				map[string]any{
-					"match_track_name":   "Old Track",
-					"replace_track_name": "New Track",
-					"enabled":            true,
+					"match_track_name":    "Old Track",
+					"match_artist_name":   "Old Artist",
+					"replace_track_name":  "New Track",
+					"replace_artist_name": "New Artist",
+					"enabled":             true,
 				}, h.CreateRule)
 
 			Expect(rec.Code).To(Equal(http.StatusCreated))
@@ -200,9 +202,11 @@ var _ = Describe("Admin Handler", func() {
 
 			rec := call("POST", "/apis/admin/rules",
 				map[string]any{
-					"match_track_name":   "Old Track",
-					"replace_track_name": "New Track",
-					"enabled":            false,
+					"match_track_name":    "Old Track",
+					"match_artist_name":   "Old Artist",
+					"replace_track_name":  "New Track",
+					"replace_artist_name": "New Artist",
+					"enabled":             false,
 				}, h.CreateRule)
 
 			Expect(rec.Code).To(Equal(http.StatusCreated))
@@ -263,8 +267,11 @@ var _ = Describe("Admin Handler", func() {
 
 			rec := call("PUT", "/apis/admin/rules/"+id,
 				map[string]any{
-					"match_track_name": "Updated Track",
-					"enabled":          false,
+					"match_track_name":    "Updated Track",
+					"match_artist_name":   "Updated Artist",
+					"replace_track_name":  "Updated Track",
+					"replace_artist_name": "Updated Artist",
+					"enabled":             false,
 				}, h.UpdateRule, gin.Param{Key: "id", Value: id})
 
 			Expect(rec.Code).To(Equal(http.StatusOK))

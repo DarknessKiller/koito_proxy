@@ -11,7 +11,10 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 )
+
+var validate = validator.New()
 
 type Handler struct {
 	ruleService *service.RuleService
@@ -22,16 +25,16 @@ func NewHandler(ruleService *service.RuleService) *Handler {
 }
 
 type RuleRequest struct {
-	MatchTrackName      *string  `json:"match_track_name,omitempty"`
-	MatchArtistName     *string  `json:"match_artist_name,omitempty"`
+	MatchTrackName      *string  `json:"match_track_name,omitempty" validate:"required_without_all=MatchArtistName MatchReleaseName MatchArtistNames MatchDurationBucket MatchMBID ReplaceTrackName ReplaceArtistName ReplaceReleaseName ReplaceArtistNames"`
+	MatchArtistName     *string  `json:"match_artist_name,omitempty" validate:"required_with=MatchTrackName"`
 	MatchReleaseName    *string  `json:"match_release_name,omitempty"`
 	MatchArtistNames    []string `json:"match_artist_names,omitempty"`
 	MatchDurationBucket *int32   `json:"match_duration_bucket,omitempty"`
 	MatchMBID           *string  `json:"match_mbid,omitempty"`
-	ReplaceTrackName    *string  `json:"replace_track_name,omitempty"`
-	ReplaceArtistName   *string  `json:"replace_artist_name,omitempty"`
-	ReplaceReleaseName  *string  `json:"replace_release_name,omitempty"`
-	ReplaceArtistNames  []string `json:"replace_artist_names,omitempty"`
+	ReplaceTrackName    *string  `json:"replace_track_name,omitempty" validate:"required_with=MatchTrackName"`
+	ReplaceArtistName   *string  `json:"replace_artist_name,omitempty" validate:"required_with=MatchArtistName"`
+	ReplaceReleaseName  *string  `json:"replace_release_name,omitempty" validate:"required_with=MatchReleaseName"`
+	ReplaceArtistNames  []string `json:"replace_artist_names,omitempty" validate:"required_with=MatchArtistNames"`
 	Enabled             *bool    `json:"enabled,omitempty"`
 }
 
@@ -94,6 +97,12 @@ func (h *Handler) CreateRule(c *gin.Context) {
 		return
 	}
 
+	if err := validate.Struct(req); err != nil {
+		slog.Error("rule validation failed", "error", err)
+		response.RespondBadRequest(c, response.ErrInvalidRequest)
+		return
+	}
+
 	rule := requestToRule(req)
 
 	if err := h.ruleService.Create(c.Request.Context(), rule); err != nil {
@@ -119,6 +128,12 @@ func (h *Handler) UpdateRule(c *gin.Context) {
 	var req RuleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		slog.Error("failed to bind update rule request", "error", err)
+		response.RespondBadRequest(c, response.ErrInvalidRequest)
+		return
+	}
+
+	if err := validate.Struct(req); err != nil {
+		slog.Error("rule validation failed", "error", err)
 		response.RespondBadRequest(c, response.ErrInvalidRequest)
 		return
 	}
