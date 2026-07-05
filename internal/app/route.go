@@ -116,6 +116,7 @@ func (a *App) SetupRoute(ctx context.Context) {
 			fb.DELETE("/"+entity+"/:id/aliases", fallbackProxy)
 			fb.PATCH("/"+entity+"/:id/aliases/primary", fallbackProxy)
 			fb.GET("/"+entity+"/:id/interest", fallbackProxy)
+			fb.PATCH("/"+entity+"/:id/image", fallbackProxy)
 		}
 
 		// Album & track artist subroutes
