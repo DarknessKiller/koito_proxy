@@ -1,6 +1,6 @@
 # Koito Proxy
 
-![Go](https://img.shields.io/badge/Go-1.26+-00ADD8?style=for-the-badge\&logo=go)
+![Go](https://img.shields.io/badge/Go-1.27-00ADD8?style=for-the-badge\&logo=go)
 ![Gin](https://img.shields.io/badge/Gin-Framework-00ACD7?style=for-the-badge)
 ![SQLite](https://img.shields.io/badge/SQLite-Embedded-003B57?style=for-the-badge\&logo=sqlite)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge\&logo=docker)
